@@ -1,0 +1,51 @@
+{
+  "name": "catch-the-run-discord",
+  "version": "1.0.0",
+  "description": "Discord bot for Catch The Run, enabling viewers to receive notifications when a speedrunner is on pace during their run.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint commands events modules index.js setup.js",
+    "lint-fix": "eslint --fix commands events modules index.js setup.js",
+    "prettier": "prettier \"**/*.+(js|ts|json|yml|yaml|graphql)\"",
+    "format": "npm run prettier -- --write",
+    "validate": "npm run lint && npm run prettier -- --list-different",
+    "test": "jest"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/craig-gordon/catch-the-run-discord"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.5.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^10.0.3",
+    "babel-jest": "^24.9.0",
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^6.5.1",
+    "eslint-config-prettier": "^6.4.0",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "husky": "^3.0.9",
+    "jest": "^24.9.0",
+    "lint-staged": "^9.4.2",
+    "prettier": "^1.18.2"
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ]
+  },
+  "prettier": {
+    "singleQuote": true
+  }
+}
