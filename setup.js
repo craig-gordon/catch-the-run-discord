@@ -1,5 +1,5 @@
+const Discord = require('discord');
 const inquirer = require('inquirer');
-const Enmap = require('enmap');
 const fs = require('fs');
 
 let baseConfig = fs.readFileSync('./config_base.txt', 'utf8');
@@ -16,7 +16,7 @@ const defaultSettings = {
   welcomeEnabled: 'false'
 };
 
-const settings = new Enmap({
+const settings = new Discord.Collection({
   name: 'settings',
   cloneLevel: 'deep',
   ensureProps: true

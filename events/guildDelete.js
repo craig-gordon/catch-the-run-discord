@@ -7,7 +7,7 @@ module.exports = (client, guild) => {
 
   // If the settings Enmap contains any guild overrides, remove them.
   // No use keeping stale data!
-  if (client.settings.has(guild.id)) {
-    client.settings.delete(guild.id);
-  }
+  // if (client.settings.has(guild.id)) {
+  //   client.settings.delete(guild.id);
+  // }
 };
