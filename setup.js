@@ -1,11 +1,17 @@
-const Discord = require('discord');
 const Enmap = require('enmap');
 const inquirer = require('inquirer');
 const fs = require('fs');
 
-let baseConfig = require('./baseConfig.js');
+let baseConfig = fs.readFileSync('./baseConfig.txt', 'utf8');
 
-const defaultSettings = baseConfig.defaultSettings;
+const defaultSettings = {
+  prefix: '!',
+  modLogChannel: 'mod-log',
+  modRole: 'Moderator',
+  adminRole: 'Administrator',
+  systemNotice: 'true',
+  welcomeEnabled: 'false'
+};
 
 const settings = new Enmap({
   name: 'settings',

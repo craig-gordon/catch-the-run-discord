@@ -4,15 +4,12 @@ const config = {
   support: [],
   token: process.env.botToken,
 
-  // DO NOT LEAVE ANY OF THESE BLANK, AS YOU WILL NOT BE ABLE TO UPDATE THEM
-  // VIA COMMANDS IN THE GUILD.
-
   defaultSettings: {
     prefix: '!',
     modLogChannel: 'mod-log',
     modRole: 'Moderator',
     adminRole: 'Administrator',
-    systemNotice: 'true', // This gives a notice when a user tries to run a command that they do not have permission to use.
+    systemNotice: 'true',
     welcomeEnabled: 'false'
   },
 
@@ -25,22 +22,18 @@ const config = {
     {
       level: 2,
       name: 'Moderator',
-      // The following lines check the guild the message came from for the roles.
-      // Then it checks if the member that authored the message has the role.
-      // If they do return true, which will allow them to execute the command in question.
-      // If they don't then return false, which will prevent them from executing the command.
       check: message => {
         try {
           const modRole = message.guild.roles.find(
             r => r.name.toLowerCase() === message.settings.modRole.toLowerCase()
           );
+
           if (modRole && message.member.roles.has(modRole.id)) return true;
         } catch (e) {
           return false;
         }
       }
     },
-
     {
       level: 3,
       name: 'Administrator',

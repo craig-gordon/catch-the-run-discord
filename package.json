@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "postinstall": "node setup.js",
     "lint": "eslint commands events modules index.js setup.js",
     "lint-fix": "eslint --fix commands events modules index.js setup.js",
     "prettier": "prettier \"**/*.+(js|ts|json|yml|yaml|graphql)\"",

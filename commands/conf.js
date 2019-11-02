@@ -2,31 +2,28 @@ const { inspect } = require('util');
 
 /*
 FOR GUILD SETTINGS SEE set.js !
-This command is used to modify the bot's default configuration values, which affects all guilds. 
-If a default setting is not specifically overwritten by a guild, changing a default here will
-change it for that guild. The `add` action adds a key to the configuration of every guild in
-your bot. The `del` action removes the key also from every guild, and loses its value forever.
+This command is used to modify the bot's default configuration values, which affects all guilds.
 */
 
 exports.run = async (client, message, [action, key, ...value], level) => {
-  // Retrieve Default Values from the default settings in the bot.
   const defaults = client.settings.get('default');
 
-  // Adding a new key adds it to every guild (it will be visible to all of them)
   if (action === 'add') {
-    if (!key) return message.reply('Please specify a key to add');
-    if (defaults[key])
+    if (!key) {
+      return message.reply('Please specify a key to add');
+    }
+    if (defaults[key]) {
       return message.reply('This key already exists in the default settings');
-    if (value.length < 1) return message.reply('Please specify a value');
+    }
+    if (value.length < 1) {
+      return message.reply('Please specify a value');
+    }
 
     // `value` being an array, we need to join it first.
     defaults[key] = value.join(' ');
 
-    // One the settings is modified, we write it back to the collection
     client.settings.set('default', defaults);
-    message.reply(
-      `${key} successfully added with the value of ${value.join(' ')}`
-    );
+    message.reply(`${key} successfully added with the value of ${value.join(' ')}`);
   }
 
   // Changing the default value of a key only modified it for guilds that did not change it to another value.

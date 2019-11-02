@@ -6,18 +6,13 @@ const Enmap = require('enmap');
 const readdir = promisify(require('fs').readdir);
 
 const client = new Discord.Client();
-
-client.config = require('./baseConfig.js');
-
-client.logger = require('./modules/logger');
-
 require('./modules/functions.js')(client);
 
+client.config = require('./config.js');
+client.logger = require('./modules/logger');
 client.commands = new Enmap();
 client.aliases = new Enmap();
-
 client.settings = new Enmap({ name: 'settings' });
-client.settings.set('name', 'settings');
 
 (async () => {
   // Here we load **commands** into memory, as a collection, so they're accessible
