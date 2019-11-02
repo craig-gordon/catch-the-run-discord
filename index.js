@@ -9,7 +9,7 @@ const client = new Discord.Client();
 
 client.config = require('./baseConfig.js');
 
-client.logger = require('./modules/Logger');
+client.logger = require('./modules/logger');
 
 require('./modules/functions.js')(client);
 
@@ -19,7 +19,7 @@ client.aliases = new Enmap();
 client.settings = new Enmap({ name: 'settings' });
 client.settings.set('name', 'settings');
 
-const init = async () => {
+(async () => {
   // Here we load **commands** into memory, as a collection, so they're accessible
   // here and everywhere else.
   const cmdFiles = await readdir('./commands/');
@@ -52,6 +52,4 @@ const init = async () => {
   }
 
   client.login(client.config.token);
-};
-
-init();
+})();

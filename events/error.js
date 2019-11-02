@@ -1,6 +1,1 @@
-module.exports = async (client, error) => {
-  client.logger.log(
-    `An error event was sent by Discord.js: \n${JSON.stringify(error)}`,
-    'error'
-  );
-};
+module.exports = (client, error) => client.logger.error(`An error event occurred: \n${JSON.stringify(error)}`);

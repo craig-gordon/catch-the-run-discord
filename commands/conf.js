@@ -9,8 +9,6 @@ your bot. The `del` action removes the key also from every guild, and loses its 
 */
 
 exports.run = async (client, message, [action, key, ...value], level) => {
-  // eslint-disable-line no-unused-vars
-
   // Retrieve Default Values from the default settings in the bot.
   const defaults = client.settings.get('default');
 
