@@ -1,19 +1,22 @@
+require('dotenv').config();
+
 const Discord = require('discord.js');
 const { promisify } = require('util');
+const Enmap = require('enmap');
 const readdir = promisify(require('fs').readdir);
 
 const client = new Discord.Client();
 
-client.config = require('./config.js');
+client.config = require('./baseConfig.js');
 
 client.logger = require('./modules/Logger');
 
 require('./modules/functions.js')(client);
 
-client.commands = new Discord.Collection();
-client.aliases = new Discord.Collection();
+client.commands = new Enmap();
+client.aliases = new Enmap();
 
-client.settings = new Discord.Collection();
+client.settings = new Enmap({ name: 'settings' });
 client.settings.set('name', 'settings');
 
 const init = async () => {

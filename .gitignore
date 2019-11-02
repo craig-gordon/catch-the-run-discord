@@ -1,28 +1,11 @@
-# Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Config
 config.js
 config.json
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Dependency directories
-node_modules/
-
-# Optional npm cache directory
+node_modules
 .npm
-
-# Optional eslint cache
 .eslintcache
-
-# dotenv environment variables file
 .env

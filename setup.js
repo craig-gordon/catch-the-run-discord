@@ -1,8 +1,9 @@
 const Discord = require('discord');
+const Enmap = require('enmap');
 const inquirer = require('inquirer');
 const fs = require('fs');
 
-let baseConfig = fs.readFileSync('./config_base.txt', 'utf8');
+let baseConfig = require('./baseConfig.js');
 
 const defaultSettings = {
   prefix: '~',
@@ -11,12 +12,11 @@ const defaultSettings = {
   adminRole: 'Administrator',
   systemNotice: 'true',
   welcomeChannel: 'welcome',
-  welcomeMessage:
-    'Say hello to {{user}}, everyone! We all need a warm welcome sometimes :D',
+  welcomeMessage: 'Say hello to {{user}}, everyone! We all need a warm welcome sometimes :D',
   welcomeEnabled: 'false'
 };
 
-const settings = new Discord.Collection({
+const settings = new Enmap({
   name: 'settings',
   cloneLevel: 'deep',
   ensureProps: true
@@ -41,14 +41,12 @@ let prompts = [
   }
 ];
 
-(async function() {
-  console.log('Setting Up GuideBot Configuration...');
+(async () => {
+  console.log('Setting up bot configuration');
   await settings.defer;
   if (!settings.has('default')) {
     prompts = prompts.slice(1);
-    console.log(
-      'First Start! Inserting default guild settings in the database...'
-    );
+    console.log('First Start! Inserting default guild settings in the database');
     await settings.set('default', defaultSettings);
   }
 
