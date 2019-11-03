@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./server');
 
 const Discord = require('discord.js');
 const { promisify } = require('util');
