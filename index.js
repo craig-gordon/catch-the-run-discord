@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('./server');
 
 const Discord = require('discord.js');
 const { promisify } = require('util');
@@ -7,7 +6,9 @@ const Enmap = require('enmap');
 const readdir = promisify(require('fs').readdir);
 
 const client = new Discord.Client();
+
 require('./modules/functions.js')(client);
+require('./server')(client);
 
 client.config = require('./config.js');
 client.logger = require('./modules/logger');
