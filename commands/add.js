@@ -14,7 +14,7 @@ exports.run = async (client, message, args, level) => {
     return message.reply(`No streamer was specified. Example format: "!add basedurngod333221"`);
   }
 
-  const getParams = {
+  const getFeedParams = {
     TableName: 'Main',
     Key: {
       PRT: twitchUsername,
@@ -23,13 +23,27 @@ exports.run = async (client, message, args, level) => {
   };
 
   try {
-    const providerDbEntry = (await dynamoClient.get(getParams).promise()).Item;
+    const providerDbEntry = (await dynamoClient.get(getFeedParams).promise()).Item;
 
     if (providerDbEntry === undefined) {
-      return message.reply(`The specified streamer either does not exist, or is not registered with Catch The Run. This command takes case-sensitive input. Example format: "!add basedurngod333221"`);
+      return message.reply(`The specified streamer is not registered with Catch The Run. This command takes case-sensitive input. Example format: "!add basedurngod333221"`);
     }
 
-    const putParams = {
+    const getServerSubParams = {
+      TableName: 'Main',
+      Key: {
+        PRT: `${twitchUsername}|DC`,
+        SRT: `F|SUB|${message.guild.id}`
+      }
+    };
+
+    const existingSub = (await dynamoClient.get(getServerSubParams).promise()).Item;
+
+    if (existingSub !== undefined) {
+      return message.reply(`${twitchUsername} is already in this server's notifications feed`);
+    }
+
+    const addSubParams = {
       TableName: 'Main',
       Item: {
         PRT: `${twitchUsername}|DC`,
@@ -37,12 +51,12 @@ exports.run = async (client, message, args, level) => {
         G1S: twitchUsername,
         DCType: 'S'
       }
-    }
+    };
 
-    const addSubResponse = await dynamoClient.put(putParams).promise();
+    const addSubResponse = await dynamoClient.put(addSubParams).promise();
 
     if (addSubResponse.err === undefined) {
-      return message.reply(`${twitchUsername} was added to this server's feed`);
+      return message.reply(`${twitchUsername} was added to this server's notifications feed`);
     }
   } catch (e) {
     console.log('error adding new discord server subscription to DB:', e);
