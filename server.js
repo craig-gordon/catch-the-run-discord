@@ -9,7 +9,7 @@ module.exports = discordClient => {
   server.use(bodyParser.json());
 
   server.post('/event', async (req, res) => {
-    const { ProviderName, Message } = req.body;
+    const { ProviderName, Message, Category } = req.body;
 
     const dynamoClient = new DynamoDB.DocumentClient({
       endpoint: 'https://dynamodb.us-east-1.amazonaws.com',
@@ -42,17 +42,20 @@ module.exports = discordClient => {
         const subType = sub.DCType;
 
         if (subType === 'DM') {
-          discordClient.users.get(sub.SRT.split('|')[2]).send(Message);
+          checkAgainstFilter(Category, sub.Filter) ? discordClient.users.get(sub.SRT.split('|')[2]).send(Message) : null;
         } else {
           const [FConst, SUBConst, serverId, userId] = sub.SRT.split('|');
 
           if (lookup[serverId]) {
             if (subType === '@') {
-              lookup[serverId] += ` <@${userId}>`;
+              checkAgainstFilter(Category, sub.Filter) ? lookup[serverId] += ` <@${userId}>` : null;
             }
           } else {
-            if (subType === '@') lookup[serverId] = ` <@${userId}>`;
-            else lookup[serverId] = '';
+            if (subType === '@') {
+              checkAgainstFilter(Category, sub.Filter) ? lookup[serverId] = ` <@${userId}>` : null;
+            } else {
+              checkAgainstFilter(Category, sub.Filter) ? lookup[serverId] = '' : null;
+            }
           }
         }
       });
@@ -69,4 +72,34 @@ module.exports = discordClient => {
   });
 
   server.listen(4000, () => console.log('Bot serving requests on port 4000'));
-}
+};
+
+const checkAgainstFilter = (category, filter) => {
+  if (filter === undefined) return true;
+
+  const gameTitle = category.slice(0, category.indexOf('_'));
+
+  if (filter.Type === 'B') { // blacklist
+    for (const filterGame of filter.Games.values) {
+      if (gameTitle === filterGame) return false;
+    }
+
+    for (const filterCategory of filter.Categories.values) {
+      if (category === filterCategory) return false;
+    }
+
+    return true;
+  }
+
+  else { // whitelist
+    for (const filterGame of filter.Games.values) {
+      if (gameTitle === filterGame) return true;
+    }
+
+    for (const filterCategory of filter.Categories.values) {
+      if (category === filterCategory) return true;
+    }
+
+    return false;
+  }
+};
