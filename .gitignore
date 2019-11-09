@@ -10,3 +10,4 @@ data
 .npm
 .eslintcache
 .env
+.vscode

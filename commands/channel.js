@@ -1,6 +1,6 @@
 exports.run = (client, message, args, level) => {
   const channel = message.guild.channels.find(channel => channel.id === message.settings.channel);
-  return message.reply(`On-pace notifications are currently being posted in: ${channel}`);
+  return message.reply(`Notifications are currently being posted in: ${channel}`);
 };
 
 exports.conf = {
@@ -13,6 +13,6 @@ exports.conf = {
 exports.help = {
   name: 'channel',
   category: 'Configuration',
-  description: 'Sets the channel that the CtR bot will post on-pace notifications',
+  description: 'Displays the channel that the CtR bot currently posts notifications in',
   usage: 'channel'
 };

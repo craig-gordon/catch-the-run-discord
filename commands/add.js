@@ -11,7 +11,7 @@ exports.run = async (client, message, args, level) => {
   const twitchUsername = args[0];
 
   if (twitchUsername === undefined) {
-    return message.reply(`No streamer was specified. Example format: "!add basedurngod333221"`);
+    return message.reply(`No streamer was specified. Example format: "!add bAsEdUrNgOd333221"`);
   }
 
   const getFeedParams = {
@@ -26,7 +26,7 @@ exports.run = async (client, message, args, level) => {
     const providerDbEntry = (await dynamoClient.get(getFeedParams).promise()).Item;
 
     if (providerDbEntry === undefined) {
-      return message.reply(`The specified streamer is not registered with Catch The Run. This command takes case-sensitive input. Example format: "!add basedurngod333221"`);
+      return message.reply(`The specified streamer is not registered with Catch The Run. This command takes case-sensitive input. Example format: "!add bAsEdUrNgOd333221"`);
     }
 
     const getServerSubParams = {

@@ -6,11 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "postinstall": "node setup.js",
-    "lint": "eslint commands events modules index.js setup.js",
-    "lint-fix": "eslint --fix commands events modules index.js setup.js",
-    "prettier": "prettier \"**/*.+(js|ts|json|yml|yaml|graphql)\"",
-    "format": "npm run prettier -- --write",
-    "validate": "npm run lint && npm run prettier -- --list-different",
+    "lint": "eslint commands events modules index.js server.js setup.js",
+    "lint-fix": "eslint --fix commands events modules index.js server.js setup.js",
+    "validate": "npm run lint && npm run test",
     "test": "jest"
   },
   "husky": {
