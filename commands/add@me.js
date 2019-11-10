@@ -11,7 +11,7 @@ exports.run = async (client, message, args, level) => {
   const providerTwitchName = args[0];
 
   if (providerTwitchName === undefined) {
-    return message.channel.reply(`No player was specified.`);
+    return message.reply(`No player was specified.`);
   }
 
   const getFeedParams = {
@@ -27,11 +27,11 @@ exports.run = async (client, message, args, level) => {
     providerDbEntry = (await dynamoClient.get(getFeedParams).promise()).Item;
   } catch (e) {
     console.log(`Error getting provider ${providerTwitchName}:`, e);
-    return message.channel.reply(`An error occurred adding player \`${providerTwitchName}\` to your mentions feed in server \`${message.guild.name}'s\`. Please try again later.`)
+    return message.reply(`An error occurred adding \`${providerTwitchName}\` to your mentions feed in server \`${message.guild.name}\`. Please try again later.`)
   }
 
   if (providerDbEntry === undefined) {
-    return message.channel.reply(`Player \`${providerTwitchName}\` is not registered with Catch The Run.`);
+    return message.reply(`\`${providerTwitchName}\` is not registered with Catch The Run.`);
   }
 
   const addSubParams = {
@@ -41,7 +41,7 @@ exports.run = async (client, message, args, level) => {
       PRT: `${providerTwitchName}|DC`,
       SRT: `F|SUB|${message.guild.id}|${message.author.id}`,
       G1S: providerTwitchName,
-      DCType: 'S'
+      DCType: '@'
     }
   };
 
@@ -49,14 +49,14 @@ exports.run = async (client, message, args, level) => {
   try {
     addSubResponse = await dynamoClient.put(addSubParams).promise();
   } catch (e) {
-    if (e.code === 'ConditionalCheckFailedException') return message.channel.reply(`\`${providerTwitchName}\` is already in your mentions feed in server \`${message.guild.name}\`.`);
+    if (e.code === 'ConditionalCheckFailedException') return message.reply(`\`${providerTwitchName}\` is already in your mentions feed in server \`${message.guild.name}\`.`);
 
     console.log(`Error adding provider ${providerTwitchName} to ${message.guild.name}'s mentions feed in server ${message.guild.id}:`, e);
-    return message.channel.reply(`An error occurred adding \`${providerTwitchName}\` to \`${message.guild.name}'s\` notifications feed. Please try again later.`);
+    return message.reply(`An error occurred adding \`${providerTwitchName}\` to \`${message.guild.name}'s\` notifications feed. Please try again later.`);
   }
 
   if (addSubResponse) {
-    return message.channel.reply(`\`${providerTwitchName}\` was added to your mentions feed in server \`${message.guild.name}'s\`.`);
+    return message.reply(`\`${providerTwitchName}\` was added to your mentions feed in server \`${message.guild.name}\`.`);
   }
 };
 
@@ -70,6 +70,6 @@ exports.conf = {
 exports.help = {
   name: 'add@me',
   category: 'Feed Management',
-  description: `Adds a player to a user's subscriptions for a given server. The player must have a feed registered with Catch The Run.`,
+  description: `Adds a player to a user's mentions feed in a given server. The player must have a feed registered with Catch The Run.`,
   usage: '!add@me [player twitch name]'
 };

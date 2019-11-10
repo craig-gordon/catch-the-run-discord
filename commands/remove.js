@@ -8,28 +8,31 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
-  const twitchUsername = args[0];
+  const providerTwitchName = args[0];
 
-  if (twitchUsername === undefined) {
-    return message.reply(`No streamer was specified. Example format: "!add bAsEdUrNgOd333221"`);
+  if (providerTwitchName === undefined) {
+    return message.channel.send(`No player was specified.`);
   }
 
-  const deleteServerSubParams = {
+  const deleteSubParams = {
     TableName: 'Main',
     ConditionExpression: 'attribute_exists(PRT)',
     Key: {
-      PRT: `${twitchUsername}|DC`,
+      PRT: `${providerTwitchName}|DC`,
       SRT: `F|SUB|${message.guild.id}`
     }
   };
 
   try {
-    await dynamoClient.delete(deleteServerSubParams).promise();
+    await dynamoClient.delete(deleteSubParams).promise();
   } catch (e) {
-    return message.reply(`The specified streamer is not a part of this server's notifications feed. This command takes case-sensitive input. Example format: "!remove bAsEdUrNgOd333221"`);
+    if (e.code === 'ConditionalCheckFailedException') return message.channel.send(`\`${providerTwitchName}\` is not in server \`${message.guild.name}'s\` notifications feed.`);
+
+    console.log(`Error removing ${providerTwitchName} from server ${message.guild.id}'s notifications feed:`, e);
+    return message.channel.send(`An error occurred removing player ${providerTwitchName} from server \`${message.guild.id}'s\` notifications feed. Please try again later.`);
   }
 
-  return message.reply(`${twitchUsername} was successfully removed from this server's notifications feed`);
+  return message.channel.send(`${providerTwitchName} was successfully removed from server \`${message.guild.name}'s\` notifications feed.`);
 };
 
 exports.conf = {
@@ -42,6 +45,6 @@ exports.conf = {
 exports.help = {
   name: 'remove',
   category: 'Configuration',
-  description: `Removes a streamer from this server's on-pace notifications feed.`,
-  usage: 'remove [streamer twitch username]'
+  description: `Removes a player from a server's notifications feed.`,
+  usage: '!remove [streamer twitch name]'
 };
