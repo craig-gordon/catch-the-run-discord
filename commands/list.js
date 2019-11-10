@@ -24,11 +24,11 @@ exports.run = async (client, message, args, level) => {
     allSubs = (await dynamoClient.query(allSubsQueryParams).promise()).Items;
   } catch (e) {
     console.log(`Error getting subs for server ${message.guild.id}:`, e);
-    return message.channel.send(`An error occurred getting all players in this server's notifications feed. Please try again later.`)
+    return message.channel.send(`An error occurred getting all players in server \`${message.guild.name}'s\` notifications feed. Please try again later.`)
   }
 
   if (allSubs === undefined) {
-    return message.channel.send(`This server does not have any players in its notifications feed. Use !add to add a player.`);
+    return message.channel.send(`Server \`${message.guild.name}\` does not have any players in its notifications feed. Use !add to add a player.`);
   }
 
   return message.channel.send(
@@ -46,7 +46,7 @@ exports.conf = {
 
 exports.help = {
   name: 'list',
-  category: 'Information',
+  category: 'Feed Information',
   description: `Lists all players in a server's notifications feed.`,
   usage: '!list'
 };

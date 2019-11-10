@@ -1,6 +1,8 @@
 const DynamoDB = require('aws-sdk/clients/dynamodb');
 
 exports.run = async (client, message, args, level) => {
+  if (message.channel.type === 'text') return message.channel.send(`Surprisingly, this command can only be used in DM.`);
+
   const dynamoClient = new DynamoDB.DocumentClient({
     endpoint: 'https://dynamodb.us-east-1.amazonaws.com',
     accessKeyId: 'AKIAYGOXM6CJTCGJ5S5Z',
@@ -27,7 +29,7 @@ exports.run = async (client, message, args, level) => {
     providerDbEntry = (await dynamoClient.get(getFeedParams).promise()).Item;
   } catch (e) {
     console.log(`Error getting provider ${providerTwitchName}:`, e);
-    return message.channel.send(`An error occurred adding \`${providerTwitchName}\` to \`${message.guild.name}'s\` notifications feed. Please try again later.`)
+    return message.channel.send(`An error occurred adding \`${providerTwitchName}\` to your Discord DM subscriptions. Please try again later.`)
   }
 
   if (providerDbEntry === undefined) {
@@ -39,9 +41,9 @@ exports.run = async (client, message, args, level) => {
     ConditionExpression: 'attribute_not_exists(PRT)',
     Item: {
       PRT: `${providerTwitchName}|DC`,
-      SRT: `F|SUB|${message.guild.id}`,
+      SRT: `F|SUB|${message.author.id}`,
       G1S: providerTwitchName,
-      DCType: 'S'
+      DCType: 'DM'
     }
   };
 
@@ -49,27 +51,27 @@ exports.run = async (client, message, args, level) => {
   try {
     addSubResponse = await dynamoClient.put(addSubParams).promise();
   } catch (e) {
-    if (e.code === 'ConditionalCheckFailedException') return message.channel.send(`\`${providerTwitchName}\` is already in server \`${message.guild.name}'s\` notifications feed.`);
+    if (e.code === 'ConditionalCheckFailedException') return message.channel.send(`\`${providerTwitchName}\` is already included in your Discord DM subscriptions.`);
 
-    console.log(`Error adding provider ${providerTwitchName} to server ${message.guild.name}'s notifications feed:`, e);
-    return message.channel.send(`An error occurred adding \`${providerTwitchName}\` to \`${message.guild.name}'s\` notifications feed. Please try again later.`);
+    console.log(`Error adding provider ${providerTwitchName} to ${message.author.id}'s Discord DM subscriptions:`, e);
+    return message.channel.send(`An error occurred adding \`${providerTwitchName}\` to your Discord DM subscriptions. Please try again later.`);
   }
 
   if (addSubResponse) {
-    return message.channel.send(`\`${providerTwitchName}\` was added to this server \`${message.guild.name}'s\` notifications feed.`);
+    return message.channel.send(`\`${providerTwitchName}\` was added to your Discord DM subscriptions.`);
   }
 };
 
 exports.conf = {
   enabled: true,
-  guildOnly: true,
-  aliases: ['add-player', 'addplayer', 'add-streamer', 'addstreamer'],
+  guildOnly: false,
+  aliases: ['add-player@dm', 'addplayer@dm', 'add-streamer@dm', 'addstreamer@dm'],
   permLevel: 'Administrator'
 };
 
 exports.help = {
-  name: 'add',
-  category: 'Feed Management',
-  description: `Adds a player to this server's notifications feed. The player must have a feed registered with Catch The Run.`,
-  usage: '!add [player twitch name]'
+  name: 'add@dm',
+  category: 'Subscription Management',
+  description: `Adds a player to a user's list of Discord DM subscriptions. The streamer must have a feed registered with Catch The Run.`,
+  usage: '!add@dm [player twitch name]'
 };

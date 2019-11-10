@@ -1,6 +1,8 @@
 const DynamoDB = require('aws-sdk/clients/dynamodb');
 
 exports.run = async (client, message, args, level) => {
+  if (message.channel.type === 'text') return message.channel.send(`Surprisingly, this command can only be used in DM.`);
+
   const dynamoClient = new DynamoDB.DocumentClient({
     endpoint: 'https://dynamodb.us-east-1.amazonaws.com',
     accessKeyId: 'AKIAYGOXM6CJTCGJ5S5Z',
@@ -8,26 +10,27 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
-  const getCTRUsernameParams = {
+  const CTRUsernameQueryParams = {
     TableName: 'Main',
     IndexName: 'Global1',
+    KeyConditionExpression: 'SRT = :SRT and G1S = :G1S',
     ProjectionExpression: 'PRT',
-    Key: {
-      SRT: 'C|DC-U',
-      G1S: message.author.id
+    ExpressionAttributeValues: {
+      ':SRT': 'C|DC-U',
+      ':G1S': message.author.id
     }
   };
 
-  let username, dbItem;
+  let username, dbResponse;
   try {
-    dbItem = (await dynamoClient.get(getCTRUsernameParams).promise()).Item;
+    dbResponse = (await dynamoClient.query(CTRUsernameQueryParams).promise());
   } catch (e) {
     console.log(`Error getting CTR username for user ${message.author.id}:`, e);
     return message.channel.send(`An error occurred getting your subscriptions. Please try again later.`)
   }
 
-  if (dbItem) {
-    username = dbItem.PRT;
+  if (dbResponse.Items.length > 0) {
+    username = dbResponse.Items[0].PRT;
   }
 
   const allSubsQueryParams = {
@@ -50,11 +53,12 @@ exports.run = async (client, message, args, level) => {
   }
 
   if (allSubs === undefined) {
-    return message.channel.send(`You are currently not subscribed to any players. Use !add@DM to add a player.`);
+    return message.channel.send(`You are currently not subscribed to any players. Use !add@dm to add a player.`);
   }
 
   return message.channel.send(
-    allSubs.map(sub => sub.G1S).join('\n'),
+    `${message.author.username}, you are subscribed to:
+    ${allSubs.map(sub => sub.G1S).join('\n')}`,
     { code: 'asciidoc' }
   );
 };
@@ -62,13 +66,13 @@ exports.run = async (client, message, args, level) => {
 exports.conf = {
   enabled: true,
   guildOnly: false,
-  aliases: ['list-players@DM', 'listplayers@DM', 'list-streamers@DM', 'liststreamers@DM'],
+  aliases: ['list-players@dm', 'listplayers@dm', 'list-streamers@dm', 'liststreamers@dm'],
   permLevel: 'User'
 };
 
 exports.help = {
-  name: 'list@DM',
-  category: 'Information',
+  name: 'list@dm',
+  category: 'Feed Information',
   description: `Lists all of a user's subscriptions.`,
-  usage: '!list@DM'
+  usage: '!list@dm'
 };

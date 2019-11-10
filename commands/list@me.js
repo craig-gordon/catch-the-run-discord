@@ -24,15 +24,16 @@ exports.run = async (client, message, args, level) => {
     allSubs = (await dynamoClient.query(allServerSpecificSubsQueryParams).promise()).Items;
   } catch (e) {
     console.log(`Error getting server ${message.guild.id}-specific subs for user ${message.author.id}:`, e);
-    return message.channel.send(`An error occurred getting your subscriptions specific to this server. Please try again later.`)
+    return message.reply(`An error occurred getting your mentions feed in server \`${message.guild.name}\`. Please try again later.`)
   }
 
   if (allSubs === undefined) {
-    return message.channel.send(`You do not have mentions enabled in this server for any players. Use !add@me to add a player.`);
+    return message.reply(`You do not have mentions enabled in this server for any players. Use !add@me to add a player.`);
   }
 
   return message.channel.send(
-    allSubs.map(sub => sub.G1S).join('\n'),
+    `${message.author.username}, you are receiving mentions in server ${message.guild.name} for:
+    ${allSubs.map(sub => sub.G1S).join('\n')}`,
     { code: 'asciidoc' }
   );
 };
@@ -46,7 +47,7 @@ exports.conf = {
 
 exports.help = {
   name: 'list@me',
-  category: 'Information',
-  description: `Lists all players that a user will get mentioned for in a given server.`,
+  category: 'Feed Information',
+  description: `Lists all players that a user receives mentions for in a given server.`,
   usage: '!list@me'
 };
