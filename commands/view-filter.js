@@ -24,7 +24,7 @@ exports.run = async (client, message, args, level) => {
   };
 
   try {
-    const dbRes = (await dynamoClient.get(getFilterParams).promise());
+    const dbRes = await dynamoClient.get(getFilterParams).promise();
 
     if (dbRes.Item) {
       return message.channel.send(
