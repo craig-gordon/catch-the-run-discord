@@ -8,27 +8,27 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
-  const allSubsQueryParams = {
+  const allServerSpecificSubsQueryParams = {
     TableName: 'Main',
     IndexName: 'Global1',
     KeyConditionExpression: 'SRT = :SRT',
     ProjectionExpression: 'G1S',
     ExpressionAttributeValues: {
-      ':SRT': `F|SUB|${message.guild.id}`
+      ':SRT': `F|SUB|${message.guild.id}|${message.author.id}`
     }
   };
 
   let allSubs;
 
   try {
-    allSubs = (await dynamoClient.query(allSubsQueryParams).promise()).Items;
+    allSubs = (await dynamoClient.query(allServerSpecificSubsQueryParams).promise()).Items;
   } catch (e) {
-    console.log(`Error getting subs for server ${message.guild.id}:`, e);
-    return message.channel.send(`An error occurred getting all players in this server's notifications feed. Please try again later.`)
+    console.log(`Error getting server ${message.guild.id}-specific subs for user ${message.author.id}:`, e);
+    return message.channel.send(`An error occurred getting your subscriptions specific to this server. Please try again later.`)
   }
 
   if (allSubs === undefined) {
-    return message.channel.send(`This server does not have any players in its notifications feed. Use !add to add a player.`);
+    return message.channel.send(`You do not have mentions enabled in this server for any players. Use !add@me to add a player.`);
   }
 
   return message.channel.send(
@@ -40,13 +40,13 @@ exports.run = async (client, message, args, level) => {
 exports.conf = {
   enabled: true,
   guildOnly: true,
-  aliases: ['list-players', 'listplayers', 'list-streamers', 'liststreamers'],
+  aliases: ['list-players@me', 'listplayers@me', 'list-streamers@me', 'liststreamers@me'],
   permLevel: 'User'
 };
 
 exports.help = {
-  name: 'list',
+  name: 'list@me',
   category: 'Information',
-  description: `Lists all players in a server's notifications feed.`,
-  usage: '!list'
+  description: `Lists all players that a user will get mentioned for in a given server.`,
+  usage: '!list@me'
 };
