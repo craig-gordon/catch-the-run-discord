@@ -42,7 +42,7 @@ exports.run = async (client, message, args, level) => {
     Item: {
       PRT: `${providerTwitchName}|DC`,
       SRT: `F|SUB|${message.author.id}`,
-      G1S: providerTwitchName,
+      GS: providerTwitchName,
       DCType: 'DM'
     }
   };

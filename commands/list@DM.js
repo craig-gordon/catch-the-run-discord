@@ -10,14 +10,15 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
+  const verbose = args[0] === 'verbose';
+
   const CTRUsernameQueryParams = {
     TableName: 'Main',
     IndexName: 'Global1',
-    KeyConditionExpression: 'SRT = :SRT and G1S = :G1S',
-    ProjectionExpression: 'PRT',
+    KeyConditionExpression: 'SRT = :SRT and GS = :GS',
     ExpressionAttributeValues: {
       ':SRT': 'C|DC-U',
-      ':G1S': message.author.id
+      ':GS': message.author.id
     }
   };
 
@@ -37,7 +38,6 @@ exports.run = async (client, message, args, level) => {
     TableName: 'Main',
     IndexName: 'ConsumerProvider',
     KeyConditionExpression: 'Consumer = :Consumer',
-    ProjectionExpression: 'G1S',
     ExpressionAttributeValues: {
       ':Consumer': username
     }
@@ -57,8 +57,8 @@ exports.run = async (client, message, args, level) => {
   }
 
   return message.channel.send(
-    `${message.author.username}, you are subscribed to:
-    ${allSubs.map(sub => sub.G1S).join('\n')}`,
+    `${message.author.username}, you are subscribed to:\n
+    ${formatOutput(allSubs, verbose)}`,
     { code: 'asciidoc' }
   );
 };
@@ -73,6 +73,30 @@ exports.conf = {
 exports.help = {
   name: 'list@dm',
   category: 'Feed Information',
-  description: `Lists all of a user's subscriptions.`,
-  usage: '!list@dm'
+  description: `Lists all of a user's subscriptions. Use verbose to display the whitelist for each player.`,
+  usage: '!list@dm (verbose)'
+};
+
+const formatOutput = (subs, verbose) => {
+  if (verbose) {
+    return subs
+      .map(sub => {
+        let subType;
+        if (sub.PRT.includes('PUSH')) subType = 'Push';
+        else if (sub.DCType === '@') subType = 'Discord Mention';
+        else if (sub.DCType === 'DM') subType = 'Discord DM';
+        return `${sub.GS} [${subType}]\n${sub.IncludedGames.values.map(game => `\t- ${game}`).join('\n')}\n${sub.IncludedCategories.values.map(cat => `\t- ${cat.replace(/[_]/, ' :: ')}`).join('\n')}`;
+      })
+      .join('\n');
+  } else {
+    return subs
+      .map(sub => {
+        let subType;
+        if (sub.PRT.includes('PUSH')) subType = 'Push';
+        else if (sub.DCType === '@') subType = 'Discord Mention';
+        else if (sub.DCType === 'DM') subType = 'Discord DM';
+        return `${sub.GS} [${subType}]`
+      })
+      .join('\n');
+  }
 };

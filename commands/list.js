@@ -8,11 +8,12 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
+  const verbose = args[0] === 'verbose';
+
   const allSubsQueryParams = {
     TableName: 'Main',
     IndexName: 'Global1',
     KeyConditionExpression: 'SRT = :SRT',
-    ProjectionExpression: 'G1S',
     ExpressionAttributeValues: {
       ':SRT': `F|SUB|${message.guild.id}`
     }
@@ -32,7 +33,7 @@ exports.run = async (client, message, args, level) => {
   }
 
   return message.channel.send(
-    allSubs.map(sub => sub.G1S).join('\n'),
+    formatOutput(allSubs, verbose),
     { code: 'asciidoc' }
   );
 };
@@ -47,6 +48,16 @@ exports.conf = {
 exports.help = {
   name: 'list',
   category: 'Feed Information',
-  description: `Lists all players in a server's notifications feed.`,
-  usage: '!list'
+  description: `Lists all players in a server's notifications feed. Use verbose to display the whitelist for each player.`,
+  usage: '!list (verbose)'
+};
+
+const formatOutput = (subs, verbose) => {
+  if (verbose) {
+    return subs
+      .map(sub => `${sub.GS}\n${sub.IncludedGames.values.map(game => `\t- ${game}`).join('\n')}\n${sub.IncludedCategories.values.map(cat => `\t- ${cat.replace(/[_]/, ' :: ')}`).join('\n')}`)
+      .join('\n');
+  } else {
+    return subs.map(sub => sub.GS).join('\n');
+  }
 };
