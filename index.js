@@ -50,3 +50,5 @@ client.settings = new Enmap({ name: 'settings' });
 
   client.login(client.config.token);
 })();
+
+global.PRODUCT_NAME = 'Catch The Run';

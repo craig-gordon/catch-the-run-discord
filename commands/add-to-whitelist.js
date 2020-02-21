@@ -8,79 +8,120 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
-  const [providerTwitchName, ...newWhitelistItems] = args;
+  const [producer, ...newWhitelistItems] = args;
 
-  if (providerTwitchName === undefined) {
-    return message.channel.send(`No streamer was specified.`);
+  const handler = getHandlerObject(message, producer);
+
+  if (producer === undefined) {
+    return handler.sendNoProducerSpecifiedMessage();
   }
 
-  const getSubParams = {
-    TableName: 'Main',
-    Key: {
-      PRT: `${providerTwitchName}|DC`,
-      SRT: `F|SUB|${message.guild.id}`
-    }
-  };
+  const getSubParams = handler.getSubParamsSortKey(producer);
 
   let sub;
   try {
     sub = (await dynamoClient.get(getSubParams).promise()).Item;
-  } catch (e) {
-    console.log(`Error getting server ${message.guild.id}'s subscription to provider ${providerTwitchName}:`, e);
-    return message.channel.send(`There was an error adding items to \`${message.guild.name}'s\` whitelist for \`${providerTwitchName}\`. Please try again later.`);
+  } catch (err) {
+    handler.logGetSubError(err, producer);
+    return handler.sendDbErrorMessage();
   }
 
   if (sub === undefined) {
-    return message.channel.send(`\`${providerTwitchName}\` is not part of this server's notifications feed.`);
+    return handler.sendSubDoesNotExistMessage();
   }
 
-  const playerCategoriesQueryParams = {
-    TableName: 'Main',
-    KeyConditionExpression: `PRT = :PRT and begins_with(SRT, :SRT)`,
-    ExpressionAttributeValues: {
-      ':PRT': providerTwitchName,
-      ':SRT': `F|CAT`
-    }
-  };
+  const playerCategoriesQueryParams = handler.getPlayerCategoriesQueryParams();
 
   let playerCategories;
-
   try {
     playerCategories = (await dynamoClient.query(playerCategoriesQueryParams).promise()).Items;
-  } catch (e) {
-    console.log(`Error getting provider ${providerTwitchName}'s feed categories:`, e);
-    return message.channel.send(`There was an error adding items to \`${message.guild.name}'s\` whitelist for \`${providerTwitchName}\`. Please try again later.`);
+  } catch (err) {
+    handler.logGetFeedCategoriesError(err);
+    return handler.sendDbErrorMessage();
   }
 
   newWhitelistItems.forEach(item => {
-    if (item.includes('_')) sub.IncludedCategories.values.push(item.replace(/[_]/, ' '));
-    else sub.IncludedGames.values.push(item.replace(/[_]/, ' ').replace(/[|]/, '_'));
+    if (item.includes('_')) {
+      sub.IncludedCategories.values.push(item.replace(/[_]/, ' '));
+    } else {
+      sub.IncludedGames.values.push(item.replace(/[_]/, ' ').replace(/[|]/, '_'));
+    }
   });
 
-  const modifyFilterParams = {
-    TableName: 'Main',
-    Item: sub
-  };
+  const modifyFilterParams = handler.getModifyFilterParams(sub);
 
   try {
     const modifyFilterResponse = await dynamoClient.put(modifyFilterParams).promise();
-    if (modifyFilterResponse) return message.channel.send(`Successfully added ${newWhitelistItems.length} items to \`${message.guild.name}'s\` whitelist for \`${providerTwitchName}\`.`);
-  } catch (e) {
-    console.log(`Error modifying server ${message.guild.id}'s subscription whitelist for provider ${providerTwitchName}:`, e);
-    return message.channel.send(`There was an error adding items to \`${message.guild.name}'s\` whitelist for \`${providerTwitchName}\`. Please try again later.`);
+    if (modifyFilterResponse) return handler.sendModifyFilterSuccessMessage(newWhitelistItems.length);
+  } catch (err) {
+    handler.logModifyFilterError(err);
+    return handler.sendDbErrorMessage();
   }
 };
 
 exports.conf = {
   enabled: true,
-  guildOnly: true,
+  guildOnly: false,
   aliases: ['addtowhitelist'],
   permLevel: 'Administrator'
 };
 
 exports.help = {
   name: 'add-to-whitelist',
-  category: 'Configuration',
-  description: `Adds one or more games or categories to a server's whitelist for the specified player. The player must be included in the server's notifications feed.`,
+  category: 'Subscription Management',
+  description: `Server use: Adds one or more games or categories to a server's whitelist for the specified player. The player must be included in the server's notifications feed.\n\n
+  DM use: Adds one or more games or categories to your whitelist for the specified player. You must be subscribed to the player.`,
   usage: '!add-to-whitelist [player twitch name] smb1 Super_Mario_World sm64|120_Star Super_Mario_Sunshine|Any%'
 };
+
+const getHandlerObject = (message, producer) => {
+  const base = {
+    sendNoProducerSpecifiedMessage: () => message.channel.send(`No streamer was specified.`),
+    getPlayerCategoriesQueryParams: () => ({
+      TableName: 'Main',
+      KeyConditionExpression: `PRT = :PRT and begins_with(SRT, :SRT)`,
+      ExpressionAttributeValues: {
+        ':PRT': producer,
+        ':SRT': `F|CAT`
+      }
+    }),
+    getModifyFilterParams: (sub) => ({
+      TableName: 'Main',
+      Item: sub
+    })
+  };
+
+  if (message.channel.type === 'dm') {
+    return Object.assign(base, {
+      getSubParamsSortKey: () => ({
+        TableName: 'Main',
+        Key: {
+          PRT: `${producer}|DC`,
+          SRT: `F|SUB|${message.author.id}`
+        }
+      }),
+      logGetSubError: (err) => console.log(`Error getting ${message.author.id}'s subscription to provider ${producer}: ${err}`),
+      sendDbErrorMessage: () => message.channel.send(`There was an error adding items to your whitelist for \`${producer}\`. Please try again later.`),
+      sendSubDoesNotExistMessage: () => message.channel.send(`You are not subscribed to \`${producer}\` through Discord.`),
+      logGetFeedCategoriesError: (err) => `Error getting producer ${producer}'s feed categories: ${err}`,
+      sendModifyFilterSuccessMessage: (newItemsCount) => message.channel.send(`Successfully added ${newItemsCount} items to your whitelist for \`${producer}\`.`),
+      logModifyFilterError: (err) => console.log(`Error modifying ${message.author.id}'s whitelist for producer ${producer}: ${err}`)
+    });
+  } else {
+    return Object.assign(base, {
+      getSubParamsSortKey: () => ({
+        TableName: 'Main',
+        Key: {
+          PRT: `${producer}|DC`,
+          SRT: `F|SUB|${message.guild.id}`
+        }
+      }),
+      logGetSubError: (err) => console.log(`Error getting server ${message.guild.id}'s subscription to producer ${producer}: ${err}`),
+      sendDbErrorMessage: () => message.channel.send(`There was an error adding items to \`${message.guild.name}'s\` whitelist for \`${producer}\`. Please try again later.`),
+      sendSubDoesNotExistMessage: () => message.channel.send(`\`${producer}\` is not part of this server's notifications feed.`),
+      logGetFeedCategoriesError: (err) => `Error getting producer ${producer}'s feed categories: ${err}`,
+      sendModifyFilterSuccessMessage: (newItemsCount) => message.channel.send(`Successfully added ${newItemsCount} items to \`${message.guild.name}'s\` whitelist for \`${producer}\`.`),
+      logModifyFilterError: (err) => console.log(`Error modifying server ${message.guild.id}'s whitelist for producer ${producer}: ${err}`)
+    });
+  }
+}

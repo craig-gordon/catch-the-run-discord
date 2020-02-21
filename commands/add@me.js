@@ -63,7 +63,7 @@ exports.run = async (client, message, args, level) => {
 exports.conf = {
   enabled: true,
   guildOnly: true,
-  aliases: ['add-player@me', 'addplayer@me', 'add-streamer@me', 'addstreamer@me'],
+  aliases: ['add-player@me', 'addplayer@me', 'add-streamer@me', 'addstreamer@me', 'subscribe@me'],
   permLevel: 'Administrator'
 };
 

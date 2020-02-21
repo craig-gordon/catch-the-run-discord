@@ -109,7 +109,7 @@ module.exports = client => {
   };
 
   Object.defineProperty(String.prototype, 'toProperCase', {
-    value: () => {
+    value: function() {
       return this.replace(
         /([^\W_]+[^\s-]*) */g,
         txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
@@ -118,7 +118,7 @@ module.exports = client => {
   });
 
   Object.defineProperty(Array.prototype, 'random', {
-    value: () => {
+    value: function() {
       return this[Math.floor(Math.random() * this.length)];
     }
   });
