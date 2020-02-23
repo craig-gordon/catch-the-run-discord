@@ -29,7 +29,7 @@ exports.run = async (client, message, args, level) => {
   }
 
   if (allSubs === undefined) {
-    return message.reply(`You do not have mentions enabled in this server for any players. Use !add@me to add a player.`);
+    return message.reply(`You do not have mentions enabled in this server for any streamers. Use !add@me to add a streamer.`);
   }
 
   return message.channel.send(
@@ -48,8 +48,8 @@ exports.conf = {
 
 exports.help = {
   name: 'list@me',
-  category: 'Feed Information',
-  description: `Lists all players that a user receives mentions for in a given server. Use verbose to display the whitelist for each player.`,
+  category: 'Subscription Information',
+  description: `Lists all streamers that a user receives mentions for in a given server. Use verbose to display the whitelist for each streamer.`,
   usage: '!list@me (verbose)'
 };
 

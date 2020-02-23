@@ -8,9 +8,9 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
-  const twitchUsername = args[0];
+  const producer = args[0];
 
-  if (twitchUsername === undefined) {
+  if (producer === undefined) {
     return message.reply(`No streamer was specified. Example format: "!add bAsEdUrNgOd333221"`);
   }
 
@@ -18,7 +18,7 @@ exports.run = async (client, message, args, level) => {
     TableName: 'Main',
     KeyConditionExpression: 'PRT = :PRT AND begins_with(SRT, :SRT)',
     ExpressionAttributeValues: {
-      ':PRT': twitchUsername,
+      ':PRT': producer,
       ':SRT': 'F|CAT'
     }
   };
@@ -35,7 +35,7 @@ exports.run = async (client, message, args, level) => {
       return message.reply(`The specified streamer does not have a notifications feed. This command takes case-sensitive input. Example format: "!remove bAsEdUrNgOd333221"`);
     }
   } catch (e) {
-    return message.reply(`There was an error getting ${twitchUsername}'s feed. Please try again later.`);
+    return message.reply(`There was an error getting ${producer}'s feed. Please try again later.`);
   }
 };
 

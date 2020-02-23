@@ -8,17 +8,17 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
-  const providerTwitchName = args[0];
+  const producer = args[0];
 
-  if (providerTwitchName === undefined) {
-    return message.reply(`No player was specified.`);
+  if (producer === undefined) {
+    return message.reply(`No streamer was specified.`);
   }
 
   const deleteSubParams = {
     TableName: 'Main',
     ConditionExpression: 'attribute_exists(PRT)',
     Key: {
-      PRT: `${providerTwitchName}|DC`,
+      PRT: `${producer}|DC`,
       SRT: `F|SUB|${message.guild.id}|${message.author.id}`
     }
   };
@@ -26,13 +26,13 @@ exports.run = async (client, message, args, level) => {
   try {
     await dynamoClient.delete(deleteSubParams).promise();
   } catch (e) {
-    if (e.code === 'ConditionalCheckFailedException') return message.reply(`\`${providerTwitchName}\` is not your mentions feed for server \`${message.guild.name}\`.`);
+    if (e.code === 'ConditionalCheckFailedException') return message.reply(`\`${producer}\` is not your mentions feed for server \`${message.guild.name}\`.`);
 
-    console.log(`Error removing ${providerTwitchName} from ${message.author.id}'s mentions feed in server ${message.guild.id}:`, e);
-    return message.reply(`An error occurred removing \`${providerTwitchName}\` from your mentions feed in server \`${message.guild.id}\`. Please try again later.`);
+    console.log(`Error removing ${producer} from ${message.author.id}'s mentions feed in server ${message.guild.id}:`, e);
+    return message.reply(`An error occurred removing \`${producer}\` from your mentions feed in server \`${message.guild.id}\`. Please try again later.`);
   }
 
-  return message.reply(`\`${providerTwitchName}\` was successfully removed from your mentions feed in server \`${message.guild.name}\`.`);
+  return message.reply(`\`${producer}\` was successfully removed from your mentions feed in server \`${message.guild.name}\`.`);
 };
 
 exports.conf = {
@@ -44,7 +44,7 @@ exports.conf = {
 
 exports.help = {
   name: 'remove@me',
-  category: 'Feed Management',
-  description: `Removes a player from a user's mentions feed in a given server.`,
-  usage: '!remove@me [player twitch name]'
+  category: 'Subscription Management',
+  description: `Removes a streamer from a user's mentions feed in a given server.`,
+  usage: '!remove@me [streamer]'
 };

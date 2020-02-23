@@ -30,11 +30,11 @@ exports.run = async (client, message, args, level) => {
     return handler.sendSubDoesNotExistMessage();
   }
 
-  const playerCategoriesQueryParams = handler.getPlayerCategoriesQueryParams();
+  const producerCategoriesQueryParams = handler.getProducerCategoriesQueryParams();
 
-  let playerCategories;
+  let producerCategories;
   try {
-    playerCategories = (await dynamoClient.query(playerCategoriesQueryParams).promise()).Items;
+    producerCategories = (await dynamoClient.query(producerCategoriesQueryParams).promise()).Items;
   } catch (err) {
     handler.logGetFeedCategoriesError(err);
     return handler.sendDbErrorMessage();
@@ -69,15 +69,15 @@ exports.conf = {
 exports.help = {
   name: 'add-to-whitelist',
   category: 'Subscription Management',
-  description: `Server use: Adds one or more games or categories to a server's whitelist for the specified player. The player must be included in the server's notifications feed.\n\n
-  DM use: Adds one or more games or categories to your whitelist for the specified player. You must be subscribed to the player.`,
-  usage: '!add-to-whitelist [player twitch name] smb1 Super_Mario_World sm64|120_Star Super_Mario_Sunshine|Any%'
+  description: `Server use: Adds one or more games or categories to a server's whitelist for the specified streamer. The streamer must be included in the server's notifications feed.\n\n
+  DM use: Adds one or more games or categories to your whitelist for the specified streamer. You must be subscribed to the streamer.`,
+  usage: '!add-to-whitelist [streamer] smb1 Super_Mario_World sm64|120_Star Super_Mario_Sunshine|Any%'
 };
 
 const getHandlerObject = (message, producer) => {
   const base = {
     sendNoProducerSpecifiedMessage: () => message.channel.send(`No streamer was specified.`),
-    getPlayerCategoriesQueryParams: () => ({
+    getProducerCategoriesQueryParams: () => ({
       TableName: 'Main',
       KeyConditionExpression: `PRT = :PRT and begins_with(SRT, :SRT)`,
       ExpressionAttributeValues: {

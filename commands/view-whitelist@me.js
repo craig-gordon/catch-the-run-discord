@@ -8,16 +8,16 @@ exports.run = async (client, message, args, level) => {
     region: 'us-east-1'
   });
 
-  const providerTwitchName = args[0];
+  const producer = args[0];
 
-  if (providerTwitchName === undefined) {
+  if (producer === undefined) {
     return message.reply(`No streamer was specified.`);
   }
 
   const getWhitelistParams = {
     TableName: 'Main',
     Key: {
-      PRT: `${providerTwitchName}|DC`,
+      PRT: `${producer}|DC`,
       SRT: `F|SUB|${message.guild.id}|${message.author.id}`
     }
   };
@@ -26,8 +26,8 @@ exports.run = async (client, message, args, level) => {
   try {
     dbRes = await dynamoClient.get(getWhitelistParams).promise();
   } catch (e) {
-    console.log(`Error getting ${message.author.id}'s whitelist for provider ${providerTwitchName} in server ${message.guild.id}:`, e);
-    return message.reply(`There was an error getting your whitelist for \`${providerTwitchName}\` in server \`${message.guild.name}\`. Please try again later.`);
+    console.log(`Error getting ${message.author.id}'s whitelist for producer ${producer} in server ${message.guild.id}:`, e);
+    return message.reply(`There was an error getting your whitelist for \`${producer}\` in server \`${message.guild.name}\`. Please try again later.`);
   }
 
   if (dbRes.Item) {
@@ -36,7 +36,7 @@ exports.run = async (client, message, args, level) => {
       { code: 'asciidoc' }
     );
   } else {
-    return message.reply(`\`${providerTwitchName}\` is not in your mentions feed for server \`${message.guild.name}\`.`);
+    return message.reply(`\`${producer}\` is not in your mentions feed for server \`${message.guild.name}\`.`);
   }
 };
 
@@ -50,8 +50,8 @@ exports.conf = {
 exports.help = {
   name: 'view-whitelist@me',
   category: 'Configuration',
-  description: `Displays the game/category whitelist settings for the specified player in a user's mentions feed.`,
-  usage: '!view-whitelist@me [player twitch name]'
+  description: `Displays the game/category whitelist settings for the specified streamer in a user's mentions feed.`,
+  usage: '!view-whitelist@me [streamer]'
 };
 
 const formatwhitelist = (games, cats) => {
