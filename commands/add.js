@@ -57,7 +57,7 @@ exports.conf = {
 exports.help = {
   name: 'add',
   category: 'Subscription Management',
-  description: `Server use: Adds a streamer to a server's notifications feed. The streamer must have a feed registered with Catch The Run.\n\n
+  description: `Server use: Adds a streamer to a server's notifications feed. The streamer must have a feed registered with Catch The Run.\n
   DM use: Adds a streamer to your Discord DM subscriptions. The streamer must have a feed registered with Catch The Run.`,
   usage: '!add [streamer]'
 };

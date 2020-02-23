@@ -40,7 +40,7 @@ exports.conf = {
 exports.help = {
   name: 'remove',
   category: 'Subscription Management',
-  description: `Server use: Removes a streamer from a server's notifications feed.\n\n
+  description: `Server use: Removes a streamer from a server's notifications feed.\n
   Removes a streamer from a user's list of Discord DM subscriptions.`,
   usage: '!remove [streamer]'
 };

@@ -45,8 +45,8 @@ exports.conf = {
 
 exports.help = {
   name: 'view-whitelist',
-  category: 'Configuration',
-  description: `Server use: Displays the game/category whitelist settings for the specified streamer.\n\n
+  category: 'Subscription Information',
+  description: `Server use: Displays the game/category whitelist settings for the specified streamer.\n
   DM use: Displays the game/category whitelist settings for the specified streamer in your subscriptions.`,
   usage: '!view-whitelist [streamer]'
 };

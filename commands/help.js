@@ -16,7 +16,7 @@ exports.run = (client, message, args, level) => {
     );
 
     let currentCategory = '';
-    let output = `= Command List =\n\n[Use ${message.settings.prefix}help <commandname> for details]\n`;
+    let output = `= Command List =\n[Use ${message.settings.prefix}help <commandname> for details]\n`;
     const sorted = myCommands
       .array()
       .sort((p, c) =>

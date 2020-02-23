@@ -44,7 +44,7 @@ exports.conf = {
 exports.help = {
   name: 'list',
   category: 'Subscription Information',
-  description: `Server use: Lists all streamers in a server's notifications feed. Use verbose to display the whitelist for each streamer.\n\n
+  description: `Server use: Lists all streamers in a server's notifications feed. Use verbose to display the whitelist for each streamer.\n
   DM use: Lists all of your Discord DM subscriptions. Use verbose to display the whitelist for each streamer.`,
   usage: '!list (verbose)'
 };

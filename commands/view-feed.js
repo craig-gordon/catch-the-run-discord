@@ -48,7 +48,7 @@ exports.conf = {
 
 exports.help = {
   name: 'view-feed',
-  category: 'Information',
+  category: 'Feed Information',
   description: `Displays the games & categories in the specified streamer's feed.`,
   usage: 'view-feed [streamer twitch username]'
 };

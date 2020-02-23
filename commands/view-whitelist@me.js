@@ -49,7 +49,7 @@ exports.conf = {
 
 exports.help = {
   name: 'view-whitelist@me',
-  category: 'Configuration',
+  category: 'Subscription Information',
   description: `Displays the game/category whitelist settings for the specified streamer in a user's mentions feed.`,
   usage: '!view-whitelist@me [streamer]'
 };
