@@ -4,7 +4,8 @@
   "description": "Discord bot for Catch The Run, enabling viewers to receive notifications when a speedrunner is on pace during their run.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "cross-env NODE_ENV=dev nodemon --inspect index.js",
+    "start-prod": "cross-env NODE_ENV=prod node index.js",
     "postinstall": "node setup.js",
     "lint": "eslint commands events modules index.js server.js setup.js",
     "lint-fix": "eslint --fix commands events modules index.js server.js setup.js",
@@ -26,14 +27,16 @@
     "better-sqlite-pool": "^0.2.3",
     "better-sqlite3": "^5.4.3",
     "body-parser": "^1.19.0",
-    "chalk": "^2.4.2",
     "discord.js": "^11.5.1",
     "dotenv": "^8.2.0",
     "enmap": "^5.2.1",
     "express": "^4.17.1",
     "inquirer": "^7.0.0",
-    "moment": "^2.24.0",
-    "moment-duration-format": "^2.3.2"
+    "moment-duration-format": "^2.3.2",
+    "pg": "^8.0.3",
+    "winston": "^3.2.1",
+    "winston-aws-cloudwatch": "^3.0.0",
+    "winston-daily-rotate-file": "^4.4.2"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -41,6 +44,7 @@
     "babel-eslint": "^10.0.3",
     "babel-jest": "^24.9.0",
     "babel-preset-env": "^1.7.0",
+    "cross-env": "^7.0.2",
     "eslint": "^6.5.1",
     "eslint-config-prettier": "^6.4.0",
     "eslint-plugin-node": "^10.0.0",

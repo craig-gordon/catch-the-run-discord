@@ -1,8 +1,8 @@
 const config = {
-  ownerID: process.env.ownerID,
+  ownerID: process.env.OWNER_ID,
   admins: [],
   support: [],
-  token: process.env.botToken,
+  token: process.env.BOT_TOKEN,
 
   defaultSettings: {
     prefix: '!',

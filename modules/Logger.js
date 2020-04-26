@@ -1,20 +1,44 @@
-const chalk = require('chalk');
-const moment = require('moment');
+const winston = require('winston');
+require('winston-daily-rotate-file');
+const CloudWatchTransport = require('winston-aws-cloudwatch');
 
-exports.log = (content, type = 'log') => {
-  const timestamp = `[${moment().format('YYYY-MM-DD HH:mm:ss')}]:`;
-  switch (type) {
-    case 'log': return console.log(`${timestamp} ${chalk.bgBlue(type.toUpperCase())} ${content} `);
-    case 'warn': return console.log(`${timestamp} ${chalk.black.bgYellow(type.toUpperCase())} ${content} `);
-    case 'error': return console.log(`${timestamp} ${chalk.bgRed(type.toUpperCase())} ${content} `);
-    case 'debug': return console.log(`${timestamp} ${chalk.green(type.toUpperCase())} ${content} `);
-    case 'cmd': return console.log(`${timestamp} ${chalk.black.bgWhite(type.toUpperCase())} ${content}`);
-    case 'ready': return console.log(`${timestamp} ${chalk.black.bgGreen(type.toUpperCase())} ${content}`);
-    default: throw new TypeError('Logger type must be either warn, debug, log, ready, cmd or error.');
+var NODE_ENV = process.env.NODE_ENV || 'dev';
+
+const logger = new winston.createLogger({
+  level: 'debug',
+  exitOnError: false
+});
+
+var config = {
+  logGroupName: 'my-log-group',
+  logStreamName: NODE_ENV,
+  createLogGroup: false,
+  createLogStream: true,
+  awsConfig: {
+    accessKeyId: process.env.CLOUDWATCH_ACCESS_KEY_ID,
+    secretAccessKey: process.env.CLOUDWATCH_SECRET_ACCESS_KEY,
+    region: process.env.CLOUDWATCH_REGION
+  },
+  formatLog: item => `${item.level}: ${item.message} ${JSON.stringify(item.meta)}`
+}
+
+if (NODE_ENV === 'dev') {
+  logger.add(
+    new (winston.transports.Console)({
+      timestamp: true,
+      colorize: true
+    })
+  )
+}
+
+if (NODE_ENV === 'prod') {
+  logger.add(CloudWatchTransport, config);
+}
+
+logger.stream = {
+  write: function(message, encoding) {
+    logger.info(message);
   }
 };
 
-exports.error = (...args) => this.log(...args, 'error');
-exports.warn = (...args) => this.log(...args, 'warn');
-exports.debug = (...args) => this.log(...args, 'debug');
-exports.cmd = (...args) => this.log(...args, 'cmd');
+module.exports = logger;

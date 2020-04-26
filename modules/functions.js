@@ -1,4 +1,6 @@
 module.exports = client => {
+  client.getCommandType = message => message.content.split(' ')[0].includes('@') ? '@' : message.type === 'dm' ? 'dm' : 'server';
+
   client.permlevel = message => {
     let permlvl = 0;
 
@@ -66,7 +68,7 @@ module.exports = client => {
 
   client.loadCommand = commandName => {
     try {
-      client.logger.log(`Loading Command: ${commandName}`);
+      client.logger.info(`Loading Command: ${commandName}`);
       const props = require(`../commands/${commandName}`);
       if (props.init) {
         props.init(client);
