@@ -34,13 +34,31 @@ const getDbClient = (callback) => {
     });
 }
 
+const getProducer = (producerTwitchName, client = null) => {
+    return (client || pool).query(
+        `SELECT producer.id, producer.twitch_name
+        FROM app_user AS producer
+        WHERE producer.twitch_name = $1`,
+        [producerTwitchName]
+    );
+};
+
+const getConsumer = (consumerDiscordId, client = null) => {
+    return (client || pool).query(
+        `SELECT consumer.id, consumer.discord_name, consumer.discord_id
+        FROM app_user AS consumer
+        WHERE consumer.discord_id = $1`,
+        [consumerDiscordId]
+    );
+};
+
 const getSub = (consumerDiscordId, producerTwitchName, domain, type, client = null) => {
     return (client || pool).query(
         `SELECT sub.id, sub.allowlist, consumer.discord_id, producer.twitch_name
         FROM subscription AS sub
         INNER JOIN app_user AS consumer ON sub.consumer_id = consumer.id
         INNER JOIN app_user AS producer ON sub.producer_id = producer.id
-        WHERE consumer.discord_id = $1 AND producer.twitch_name = $2 AND sub_domain = $3 AND discord_sub_type = $4`,
+        WHERE consumer.discord_id = $1 AND producer.twitch_name = $2 AND subscription_domain = $3 AND discord_subscription_type = $4`,
         [consumerDiscordId, producerTwitchName, domain, type]
     );
 };
@@ -56,6 +74,14 @@ const getFeedCategories = (producerTwitchName, client = null) => {
         [producerTwitchName]
     );
 };
+
+const addSub = (consumerId, producerId, discordMentionServerId, domain, type, endpoint, allowlist, client = null) => {
+    return (client || pool).query(
+        `INSERT INTO subscription (consumer_id, producer_id, discord_mention_server_id, subscription_domain, discord_subscription_type, endpoint, allowlist, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, to_timestamp(${Date.now() / 1000.0}))`,
+        [consumerId, producerId, discordMentionServerId, domain, type, endpoint, allowlist]
+    );
+}
 
 const addToAllowlist = (subId, items, client = null) => {
     return (client || pool).query(
@@ -77,8 +103,11 @@ const removeFromAllowlist = (subId, items, client = null) => {
 
 module.exports = {
     getDbClient,
+    getProducer,
+    getConsumer,
     getSub,
     getFeedCategories,
+    addSub,
     addToAllowlist,
     removeFromAllowlist
 };

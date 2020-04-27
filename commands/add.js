@@ -1,51 +1,53 @@
-const DynamoDB = require('aws-sdk/clients/dynamodb');
+const db = require('../db/index.js');
+const getCommandMessager = require('../modules/getCommandMessager.js');
+const getCommandLogger = require('../modules/getCommandLogger.js');
 
 exports.run = async (client, message, args, level) => {
-  const dynamoClient = new DynamoDB.DocumentClient({
-    endpoint: 'https://dynamodb.us-east-1.amazonaws.com',
-    accessKeyId: 'AKIAYGOXM6CJTCGJ5S5Z',
-    secretAccessKey: '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',
-    region: 'us-east-1'
-  });
+  const [producer, ...allowlistItems] = args;
+  const cmdName = this.help.name;
+  const cmdType = client.getCommandType(message);
+  const consumerDiscordId = cmdType === 'dm' ? message.author.id : message.guild.id;
+  const messager = getCommandMessager(message, cmdType, cmdName, producer);
+  const logger = getCommandLogger(client.logger, message, cmdType, cmdName, producer);
 
-  const producer = args[0];
+  if (producer === undefined) return messager.noProducerSpecified();
 
-  const handler = getHandlerObject(message, producer);
+  // use a dbClient
 
-  if (producer === undefined) {
-    return handler.sendNoProducerSpecifiedMessage();
-  }
-
-  const getFeedParams = handler.getGetFeedParams();
-
-  let producerDbEntry;
+  let producerRecord;
   try {
-    producerDbEntry = (await dynamoClient.get(getFeedParams).promise()).Item;
+    producerRecord = (await db.getProducer(producer)).rows[0];
   } catch (err) {
-    handler.logGetProducerDbEntryError(err);
-    return handler.sendDbErrorMessage();
+    logger.getProducerError(err);
+    return messager.dbError();
   }
 
-  if (producerDbEntry === undefined) {
-    return handler.sendProducerDoesNotExistMessage();
-  }
+  if (producerRecord === undefined) return messager.producerDoesNotExist();
 
-  const addSubParams = handler.getAddSubParams();
-
-  let addSubResponse;
+  let consumerRecord;
   try {
-    addSubResponse = await dynamoClient.put(addSubParams).promise();
+    consumerRecord = (await db.getConsumer(consumerDiscordId)).rows[0];
   } catch (err) {
-    if (err.code === 'ConditionalCheckFailedException') return handler.sendSubAlreadyExistsMessage();
-
-    handler.logAddSubError(err);
-    return handler.sendDbErrorMessage();
+    logger.getConsumerError(err);
+    return messager.dbError();
   }
 
-  if (addSubResponse) {
-    return handler.sendAddSubSuccessMessage();
+  try {
+    await db.addSub(producerRecord.id, consumerRecord.id, null, 'discord', cmdType, consumerDiscordId, {});
+  } catch (err) {
+    if (err.code === '23505') return messager.subAlreadyExists();
+
+    logger.addSubError(err);
+    return messager.dbError();
   }
+
+  return messager.addSubSuccess();
 };
+
+// validate all items
+// add each valid item to an object
+// serialize the object
+// add invalid items to container to be included in return message
 
 exports.conf = {
   enabled: true,
@@ -57,58 +59,7 @@ exports.conf = {
 exports.help = {
   name: 'add',
   category: 'Subscription Management',
-  description: `Server use: Adds a streamer to a server's notifications feed. The streamer must have a feed registered with Catch The Run.\n
-  DM use: Adds a streamer to your Discord DM subscriptions. The streamer must have a feed registered with Catch The Run.`,
-  usage: '!add [streamer]'
+  description: `[Server] Adds a streamer to a server's notifications feed. The streamer must have a feed registered with ${global.PRODUCT_NAME}.\n
+  [DM] Adds a streamer to your Discord DM subscriptions. The streamer must have a feed registered with ${global.PRODUCT_NAME}.`,
+  usage: '!add streamer_twitch_username [smb1] [Super_Mario_World] [sm64|120_Star] [Super_Mario_Sunshine|Any%]'
 };
-
-const getHandlerObject = (message, producer) => {
-  const base = {
-    sendNoProducerSpecifiedMessage: () => message.channel.send(`No streamer was specified.`),
-    getGetFeedParams: () => ({
-      TableName: 'Main',
-      Key: {
-        PRT: producer,
-        SRT: 'F'
-      }
-    }),
-    logGetProducerDbEntryError: (err) => console.log(`Error getting producer ${producer}: ${err}`),
-    sendProducerDoesNotExistMessage: () => message.channel.send(`Streamer \`${producer}\` is not registered with ${global.PRODUCT_NAME}.`)
-  };
-
-  if (message.channel.type === 'dm') {
-    return Object.assign(base, {
-      sendDbErrorMessage: () => message.channel.send(`An error occurred adding \`${producer}\` to your Discord DM subscriptions. Please try again later.`),
-      getAddSubParams: () => ({
-        TableName: 'Main',
-        ConditionExpression: 'attribute_not_exists(PRT)',
-        Item: {
-          PRT: `${producer}|DC`,
-          SRT: `F|SUB|${message.author.id}`,
-          GS: producer,
-          DCType: 'DM'
-        }
-      }),
-      sendSubAlreadyExistsMessage: () => message.channel.send(`\`${producer}\` is already included in your Discord DM subscriptions.`),
-      logAddSubError: (err) => console.log(`Error adding producer ${producer} to ${message.author.id}'s Discord DM subscriptions: ${err}`),
-      sendAddSubSuccessMessage: () => message.channel.send(`\`${producer}\` was added to your Discord DM subscriptions.`)
-    });
-  } else {
-    return Object.assign(base, {
-      sendDbErrorMessage: () => message.channel.send(`An error occurred adding \`${producer}\` to \`${message.guild.name}'s\` notifications feed. Please try again later.`),
-      getAddSubParams: () => ({
-        TableName: 'Main',
-        ConditionExpression: 'attribute_not_exists(PRT)',
-        Item: {
-          PRT: `${producer}|DC`,
-          SRT: `F|SUB|${message.guild.id}`,
-          GS: producer,
-          DCType: 'S'
-        }
-      }),
-      sendSubAlreadyExistsMessage: () => message.channel.send(`\`${producer}\` is already in server \`${message.guild.name}'s\` notifications feed.`),
-      logAddSubError: (err) => console.log(`Error adding producer ${producer} to server ${message.guild.name}'s notifications feed: ${err}`),
-      sendAddSubSuccessMessage: () => message.channel.send(`\`${producer}\` was added to this server \`${message.guild.name}'s\` notifications feed.`)
-    });
-  }
-}

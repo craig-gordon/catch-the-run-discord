@@ -30,9 +30,10 @@ exports.run = async (client, message, args, level) => {
     return messager.dbError();
   }
 
-  // validate each item
-  // add each item to an object
+  // validate all items
+  // add each valid item to an object
   // serialize the object
+  // add invalid items to container to be included in return message
 
   const serializedItems = allowlistItemsToAdd.map(item => {
     if (item.includes('_')) {
@@ -65,5 +66,5 @@ exports.help = {
   category: 'Subscription Management',
   description: `[Server] Adds one or more games or categories to a server's allowlist for the specified streamer. The server must be subscribed to the streamer.\n
   [DM] Adds one or more games or categories to your allowlist for the specified streamer. You must be subscribed to the streamer.`,
-  usage: '!add-to-allowlist [streamer] smb1 Super_Mario_World sm64|120_Star Super_Mario_Sunshine|Any%'
+  usage: '!add streamer_twitch_username smb1 [Super_Mario_World] [sm64|120_Star] [Super_Mario_Sunshine|Any%]'
 }

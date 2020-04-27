@@ -1,75 +1,65 @@
-const DynamoDB = require('aws-sdk/clients/dynamodb');
+const db = require('../db/index.js');
+const getCommandMessager = require('../modules/getCommandMessager.js');
+const getCommandLogger = require('../modules/getCommandLogger.js');
 
 exports.run = async (client, message, args, level) => {
-  const dynamoClient = new DynamoDB.DocumentClient({
-    endpoint: 'https://dynamodb.us-east-1.amazonaws.com',
-    accessKeyId: 'AKIAYGOXM6CJTCGJ5S5Z',
-    secretAccessKey: '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',
-    region: 'us-east-1'
-  });
+  const [producer, ...allowlistItems] = args;
+  const cmdName = this.help.name;
+  const cmdType = client.getCommandType(message);
+  const messager = getCommandMessager(message, cmdType, cmdName, producer);
+  const logger = getCommandLogger(client.logger, message, cmdType, cmdName, producer);
 
-  const producer = args[0];
+  if (producer === undefined) return messager.noProducerSpecified();
 
-  if (producer === undefined) {
-    return message.reply(`No streamer was specified.`);
-  }
-
-  const getFeedParams = {
-    TableName: 'Main',
-    Key: {
-      PRT: producer,
-      SRT: 'F'
-    }
-  };
-
-  let producerDbEntry;
+  let producerRecord;
   try {
-    producerDbEntry = (await dynamoClient.get(getFeedParams).promise()).Item;
-  } catch (e) {
-    console.log(`Error getting producer ${producer}:`, e);
-    return message.reply(`An error occurred adding \`${producer}\` to your mentions feed in server \`${message.guild.name}\`. Please try again later.`)
+    producerRecord = (await db.getProducer(producer)).rows[0];
+  } catch (err) {
+    logger.getProducerError(err);
+    return messager.dbError();
   }
 
-  if (producerDbEntry === undefined) {
-    return message.reply(`\`${producer}\` is not registered with Catch The Run.`);
-  }
+  if (producerRecord === undefined) return messager.producerDoesNotExist();
 
-  const addSubParams = {
-    TableName: 'Main',
-    ConditionExpression: 'attribute_not_exists(PRT)',
-    Item: {
-      PRT: `${producer}|DC`,
-      SRT: `F|SUB|${message.guild.id}|${message.author.id}`,
-      GS: producer,
-      DCType: '@'
-    }
-  };
-
-  let addSubResponse;
+  let consumerRecord;
   try {
-    addSubResponse = await dynamoClient.put(addSubParams).promise();
-  } catch (e) {
-    if (e.code === 'ConditionalCheckFailedException') return message.reply(`\`${producer}\` is already in your mentions feed in server \`${message.guild.name}\`.`);
-
-    console.log(`Error adding producer ${producer} to ${message.guild.name}'s mentions feed in server ${message.guild.id}:`, e);
-    return message.reply(`An error occurred adding \`${producer}\` to \`${message.guild.name}'s\` notifications feed. Please try again later.`);
+    consumerRecord = (await db.getConsumer(message.author.id)).rows[0];
+  } catch (err) {
+    logger.getConsumerError(err);
+    return messager.dbError();
   }
 
-  if (addSubResponse) {
-    return message.reply(`\`${producer}\` was added to your mentions feed in server \`${message.guild.name}\`.`);
+  // get discord mention server record
+  // check if discord server itself has an existing subscription to producer
+  // check if discord server's allowlist includes the specified allowlist items
+
+  try {
+    await db.addSub(producerRecord.id, consumerRecord.id, null, 'discord', cmdType, message.author.id, {});
+  } catch (err) {
+    if (err.code === '23505') return messager.subAlreadyExists();
+
+    logger.addSubError(err);
+    return messager.dbError();
   }
+
+  return messager.addSubSuccess();
 };
+
+// validate all items
+// add each valid item to an object
+// serialize the object
+// add invalid items to container to be included in return message
 
 exports.conf = {
   enabled: true,
   guildOnly: true,
   aliases: ['add-player@me', 'addplayer@me', 'add-streamer@me', 'addstreamer@me', 'subscribe@me'],
-  permLevel: 'Administrator'
+  permLevel: 'User'
 };
 
 exports.help = {
   name: 'add@me',
   category: 'Subscription Management',
-  description: `Adds a streamer to a user's mentions feed in a given server. The streamer must have a feed registered with Catch The Run.`,
+  description: `[@] Adds a streamer to a server's notifications feed. The streamer must have a feed registered with ${global.PRODUCT_NAME}.`,
   usage: '!add@me [streamer]'
 };
