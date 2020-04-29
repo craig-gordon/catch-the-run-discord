@@ -8,4 +8,5 @@ data
 .npm
 .eslintcache
 .env
+env
 .vscode

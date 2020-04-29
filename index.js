@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: `./env/.env.${process.env.NODE_ENV || 'dev'}` });
 
 const Discord = require('discord.js');
 const { promisify } = require('util');
