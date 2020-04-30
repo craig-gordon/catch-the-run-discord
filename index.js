@@ -7,11 +7,11 @@ const readdir = promisify(require('fs').readdir);
 
 const client = new Discord.Client();
 
-require('./modules/functions.js')(client);
+require('./modules/clientMethods.js')(client);
 require('./server')(client);
 
 client.config = require('./config.js');
-client.logger = require('./modules/logger');
+client.logger = require('./modules/baseLogger');
 client.commands = new Enmap();
 client.aliases = new Enmap();
 client.settings = new Enmap({ name: 'settings' });

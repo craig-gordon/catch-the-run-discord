@@ -32,6 +32,15 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
     };
 
     const common = {
+        logContext: (ctx) => {
+            const now = Date.now();
+            ctx.elapsedExecutionTime = `${now - ctx.cmdExecutionStartTime}ms`;
+            ctx.elapsedSinceMessageCreationTime = `${now - ctx.messageCreationTime}ms`;
+            delete ctx.cmdExecutionStartTime;
+            delete ctx.messageCreationTime;
+            logger.info('%o', ctx);
+        },
+        getDbClientError: (err) => logger.error(`Error getting client from pg pool: ${err}`),
         getProducerError: (err) => logger.error(`Error getting producer record for ${producer}: ${err}`)
     };
 

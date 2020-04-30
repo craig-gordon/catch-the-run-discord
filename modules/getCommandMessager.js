@@ -53,7 +53,8 @@ module.exports = (message, cmdType, cmdName, producer) => {
     const common = {
         noProducerSpecified: () => message.channel.send(`No streamer was specified.`),
         noAllowlistItemsSpecified: () => message.channel.send(`No allowlist items were specified.`),
-        producerDoesNotExist: () => message.channel.send(`\`${producer}\` is not registered with ${global.PRODUCT_NAME}.`)
+        producerDoesNotExist: () => message.channel.send(`\`${producer}\` is not registered with ${global.PRODUCT_NAME}.`),
+        consumerDoesNotExist: () => message.channel.send(`Your Discord account is not connected to ${global.PRODUCT_NAME}. Please use !connect.`)
     };
 
     return Object.assign(messageRepository[cmdType][cmdName], common);

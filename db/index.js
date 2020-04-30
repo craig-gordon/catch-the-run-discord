@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { Pool } = require('pg');
-const logger = require('../modules/logger');
+const logger = require('../modules/baseLogger');
 
 const pool = new Pool({
     host: process.env.DB_HOST,
@@ -10,29 +10,9 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-const getDbClient = (callback) => {
-    pool.connect((err, client, done) => {
-        const query = client.query;
+const UNIQUE_VIOLATION_CODE = '23505';
 
-        client.query = (...args) => {
-            client.lastQuery = args;
-            return query.apply(client, args);
-        };
-
-        const timeout = setTimeout(() => {
-            console.error('A client has been checked out for more than 5 seconds!');
-            console.error(`The last executed query on this client was: ${client.lastQuery}`);
-        }, 5000);
-        
-        const release = (err) => {
-            done(err);
-            clearTimeout(timeout);
-            client.query = query;
-        };
-
-        callback(err, client, release);
-    });
-}
+const getDbClient = () => pool.connect();
 
 const getProducer = (producerTwitchName, client = null) => {
     return (client || pool).query(
@@ -102,6 +82,7 @@ const removeFromAllowlist = (subId, items, client = null) => {
 };
 
 module.exports = {
+    UNIQUE_VIOLATION_CODE,
     getDbClient,
     getProducer,
     getConsumer,

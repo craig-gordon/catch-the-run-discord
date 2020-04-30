@@ -1,47 +1,52 @@
 const db = require('../db/index.js');
 const getCommandMessager = require('../modules/getCommandMessager.js');
 const getCommandLogger = require('../modules/getCommandLogger.js');
+const CommandExecutionContext = require('../modules/commandExecutionContext.js');
 
 exports.run = async (client, message, args, level) => {
-  const [producer, ...allowlistItems] = args;
-  const cmdName = this.help.name;
-  const cmdType = client.getCommandType(message);
-  const consumerDiscordId = cmdType === 'dm' ? message.author.id : message.guild.id;
-  const messager = getCommandMessager(message, cmdType, cmdName, producer);
-  const logger = getCommandLogger(client.logger, message, cmdType, cmdName, producer);
+  const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
+  const [producer, ...allowlistItems] = ctx.args;
+  const consumerDiscordId = ctx.getConsumerDiscordId();
+  const messager = getCommandMessager(message, ctx.cmdType, ctx.cmdName, producer);
+  const logger = getCommandLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
   if (producer === undefined) return messager.noProducerSpecified();
 
-  // use a dbClient
-
-  let producerRecord;
+  let dbClient;
   try {
-    producerRecord = (await db.getProducer(producer)).rows[0];
+    dbClient = await db.getDbClient();
   } catch (err) {
-    logger.getProducerError(err);
-    return messager.dbError();
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), message.dbError);
   }
 
-  if (producerRecord === undefined) return messager.producerDoesNotExist();
-
+  const consumerRes = db.getConsumer(consumerDiscordId, dbClient);
+  const producerRes = db.getProducer(producer, dbClient);
   let consumerRecord;
+  let producerRecord;
+
   try {
-    consumerRecord = (await db.getConsumer(consumerDiscordId)).rows[0];
+    consumerRecord = (await consumerRes).rows[0];
   } catch (err) {
-    logger.getConsumerError(err);
-    return messager.dbError();
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getConsumerError(err), messager.dbError);
   }
 
   try {
-    await db.addSub(producerRecord.id, consumerRecord.id, null, 'discord', cmdType, consumerDiscordId, {});
+    producerRecord = (await producerRes).rows[0];
   } catch (err) {
-    if (err.code === '23505') return messager.subAlreadyExists();
-
-    logger.addSubError(err);
-    return messager.dbError();
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), messager.dbError);
   }
 
-  return messager.addSubSuccess();
+  if (consumerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerDoesNotExist);
+  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
+
+  try {
+    await db.addSub(producerRecord.id, consumerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, {}, dbClient);
+  } catch (err) {
+    if (err.code === db.UNIQUE_VIOLATION_CODE) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.subAlreadyExists);
+    else return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.addSubError(err), messager.dbError);
+  }
+
+  return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.addSubSuccess);
 };
 
 // validate all items

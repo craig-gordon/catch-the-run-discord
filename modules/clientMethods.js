@@ -1,6 +1,4 @@
 module.exports = client => {
-  client.getCommandType = message => message.content.split(' ')[0].includes('@') ? '@' : message.type === 'dm' ? 'dm' : 'server';
-
   client.permlevel = message => {
     let permlvl = 0;
 
