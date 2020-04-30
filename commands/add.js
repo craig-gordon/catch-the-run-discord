@@ -11,6 +11,7 @@ exports.run = async (client, message, args, level) => {
   const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
   if (producer === undefined) return messager.noProducerSpecified();
+  if (producer === 'help') return ctx.endCommandExecution(null, logger.logContext, null, () => messager.helpDescription(this.help.description));
 
   let dbClient;
   try {

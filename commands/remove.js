@@ -11,6 +11,7 @@ exports.run = async (client, message, args, level) => {
   const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
   if (producer === undefined) return messager.noProducerSpecified();
+  if (producer === 'help') return ctx.endCommandExecution(null, logger.logContext, null, () => messager.helpDescription(this.help.description));
 
   let dbClient;
   try {
@@ -62,7 +63,7 @@ exports.conf = {
 exports.help = {
   name: 'remove',
   category: 'Subscription Management',
-  description: `[Server] Removes a streamer to a server's notifications feed. The streamer must have a feed registered with ${global.PRODUCT_NAME}.\n
-  [DM] Removes a streamer to your Discord DM subscriptions. The streamer must have a feed registered with ${global.PRODUCT_NAME}.`,
+  description: `[Server] Removes a streamer from a server's notifications feed.\n
+  [DM] Removes a streamer from your Discord DM subscriptions.`,
   usage: '!remove streamer_twitch_username'
 };

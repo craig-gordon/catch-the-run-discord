@@ -50,6 +50,7 @@ module.exports = (message, cmdType, cmdName, producer) => {
     };
 
     const common = {
+        helpDescription: (helpDescription) => s(helpDescription),
         noProducerSpecified: () => s(`No streamer was specified.`),
         noAllowlistItemsSpecified: () => s(`No allowlist items were specified.`),
         producerDoesNotExist: () => s(`Streamer \`${producer}\` is not registered with ${global.PRODUCT_NAME}.`),
