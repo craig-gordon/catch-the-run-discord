@@ -1,14 +1,14 @@
 const db = require('../db/index.js');
-const getCommandMessager = require('../modules/getCommandMessager.js');
-const getCommandLogger = require('../modules/getCommandLogger.js');
+const getMessager = require('../modules/getMessager.js');
+const getLogger = require('../modules/getLogger.js');
 const CommandExecutionContext = require('../modules/commandExecutionContext.js');
 
 exports.run = async (client, message, args, level) => {
   const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
   const [producer, ...allowlistItems] = ctx.args;
   const consumerDiscordId = ctx.getConsumerDiscordId();
-  const messager = getCommandMessager(message, ctx.cmdType, ctx.cmdName, producer);
-  const logger = getCommandLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
+  const messager = getMessager(message, ctx.cmdType, ctx.cmdName, producer);
+  const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
   if (producer === undefined) return messager.noProducerSpecified();
 
