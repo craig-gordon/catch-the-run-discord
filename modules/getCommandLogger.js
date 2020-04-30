@@ -8,14 +8,18 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
             },
             'add': {
                 getConsumerError: (err) => logger.error(`Error getting consumer record for (${message.guild.id} | ${message.guild.name}): ${err}`),
-                addSubError: (err) => console.log(`Error adding producer ${producer} to (${message.guild.id} | ${message.guild.name})'s subscriptions: ${err}`)
+                addSubError: (err) => logger.error(`Error adding producer ${producer} to (${message.guild.id} | ${message.guild.name})'s subscriptions: ${err}`)
+            },
+            'remove': {
+                getConsumerError: (err) => logger.error(`Error getting consumer record for (${message.guild.id} | ${message.guild.name}): ${err}`),
+                removeSubError: (err) => logger.error(`Error removing producer ${producer} from (${message.guild.id} | ${message.guild.name})'s subscriptions: ${err}`)
             }
         },
         '@': {
             'add': {
                 getConsumerError: (err) => logger.error(`Error getting consumer record for (${message.author.id} | ${message.author.username}): ${err}`),
                 getMentionServerError: (err) => logger.error(`Error getting Discord mention server record for server (${message.guild.id} | ${message.guild.name}): ${err}`),
-                addSubError: (err) => console.log(`Error adding producer ${producer} to (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
+                addSubError: (err) => logger.error(`Error adding producer ${producer} to (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
             }
         },
         'dm': {
@@ -26,7 +30,11 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
             },
             'add': {
                 getConsumerError: (err) => logger.error(`Error getting consumer record for (${message.author.id} | ${message.author.username}): ${err}`),
-                addSubError: (err) => console.log(`Error adding producer ${producer} to (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
+                addSubError: (err) => logger.error(`Error adding producer ${producer} to (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
+            },
+            'remove': {
+                getConsumerError: (err) => logger.error(`Error getting consumer record for (${message.author.id} | ${message.author.username}): ${err}`),
+                removeSubError: (err) => logger.error(`Error removing producer ${producer} from (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
             }
         }
     };

@@ -1,84 +1,68 @@
-const DynamoDB = require('aws-sdk/clients/dynamodb');
+const db = require('../db/index.js');
+const getCommandMessager = require('../modules/getCommandMessager.js');
+const getCommandLogger = require('../modules/getCommandLogger.js');
+const CommandExecutionContext = require('../modules/commandExecutionContext.js');
 
 exports.run = async (client, message, args, level) => {
-  const dynamoClient = new DynamoDB.DocumentClient({
-    endpoint: 'https://dynamodb.us-east-1.amazonaws.com',
-    accessKeyId: 'AKIAYGOXM6CJTCGJ5S5Z',
-    secretAccessKey: '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',
-    region: 'us-east-1'
-  });
+  const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
+  const [producer] = ctx.args;
+  const consumerDiscordId = ctx.getConsumerDiscordId();
+  const messager = getCommandMessager(message, ctx.cmdType, ctx.cmdName, producer);
+  const logger = getCommandLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
-  const producer = args[0];
+  if (producer === undefined) return messager.noProducerSpecified();
 
-  const handler = getHandler(message, producer);
-
-  if (producer === undefined) {
-    return handler.sendNoProducerSpecifiedMessage();
+  let dbClient;
+  try {
+    dbClient = await db.getDbClient();
+  } catch (err) {
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), message.dbError);
   }
 
-  const deleteSubParams = handler.getDeleteSubParams();
+  const consumerRes = db.getConsumer(consumerDiscordId, dbClient);
+  const producerRes = db.getProducer(producer, dbClient);
+  let consumerRecord;
+  let producerRecord;
 
   try {
-    await dynamoClient.delete(deleteSubParams).promise();
+    consumerRecord = (await consumerRes).rows[0];
   } catch (err) {
-    if (err.code === 'ConditionalCheckFailedException') return handler.sendNoSubExistsMessage();
-
-    handler.logDeleteSubError(err);
-    return handler.sendDbErrorMessage();
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getConsumerError(err), messager.dbError);
   }
 
-  return handler.sendDeleteSubSuccessMessage();
+  try {
+    producerRecord = (await producerRes).rows[0];
+  } catch (err) {
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), messager.dbError);
+  }
+
+  if (consumerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerDoesNotExist);
+  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
+  if (consumerRecord.id === producerRecord.id) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerIsProducer);
+
+  let removeRes;
+  try {
+    removeRes = await db.removeSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, dbClient);
+  } catch (err) {
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.removeSubError(err), messager.dbError);
+  }
+
+  if (removeRes.rowCount === 0) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.subDoesNotExist);
+
+  return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.removeSubSuccess);
 };
 
 exports.conf = {
   enabled: true,
   guildOnly: false,
-  aliases: ['remove-player', 'removeplayer', 'remove-streamer', 'removestreamer'],
+  aliases: ['remove-player', 'removeplayer', 'remove-streamer', 'removestreamer', 'unsubscribe'],
   permLevel: 'Administrator'
 };
 
 exports.help = {
   name: 'remove',
   category: 'Subscription Management',
-  description: `Server use: Removes a streamer from a server's notifications feed.\n
-  Removes a streamer from a user's list of Discord DM subscriptions.`,
-  usage: '!remove [streamer]'
-};
-
-const getHandler = (message, producer) => {
-  const base = {
-    sendNoProducerSpecifiedMessage: () => message.channel.send(`No streamer was specified.`),
-  };
-
-  if (message.channel.type === 'dm') {
-    return Object.assign(base, {
-      getDeleteSubParams: () => ({
-        TableName: 'Main',
-        ConditionExpression: 'attribute_exists(PRT)',
-        Key: {
-          PRT: `${producer}|DC`,
-          SRT: `F|SUB|${message.author.id}`
-        }
-      }),
-      sendNoSubExistsMessage: () => message.channel.send(`\`${producer}\` is not in your Discord DM subscriptions.`),
-      logDeleteSubError: (err) => console.log(`Error removing ${producer} from ${message.author.id}'s Discord DM subscriptions: ${err}`),
-      sendDbErrorMessage: () => message.channel.send(`An error occurred removing \`${producer}\` from your Discord DM subscriptions. Please try again later.`),
-      sendDeleteSubSuccessMessage: () => message.channel.send(`\`${producer}\` was successfully removed from your Discord DM subscriptions.`)
-    });
-  } else {
-    return Object.assign(base, {
-      getDeleteSubParams: () => ({
-        TableName: 'Main',
-        ConditionExpression: 'attribute_exists(PRT)',
-        Key: {
-          PRT: `${producer}|DC`,
-          SRT: `F|SUB|${message.guild.id}`
-        }
-      }),
-      sendNoSubExistsMessage: () => message.channel.send(`\`${producer}\` is not in server \`${message.guild.name}'s\` notifications feed.`),
-      logDeleteSubError: (err) => console.log(`Error removing ${producer} from server ${message.guild.id}'s notifications feed: ${err}`),
-      sendDbErrorMessage: () => message.channel.send(`An error occurred removing ${producer} from server \`${message.guild.id}'s\` notifications feed. Please try again later.`),
-      sendDeleteSubSuccessMessage: () => message.channel.send(`${producer} was successfully removed from server \`${message.guild.name}'s\` notifications feed.`)
-    });
-  }
+  description: `[Server] Removes a streamer to a server's notifications feed. The streamer must have a feed registered with ${global.PRODUCT_NAME}.\n
+  [DM] Removes a streamer to your Discord DM subscriptions. The streamer must have a feed registered with ${global.PRODUCT_NAME}.`,
+  usage: '!remove streamer_twitch_username'
 };

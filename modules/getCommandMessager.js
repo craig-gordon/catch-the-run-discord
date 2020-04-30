@@ -16,6 +16,14 @@ module.exports = (message, cmdType, cmdName, producer) => {
                     message.channel.send(`Server \`${message.guild.name}\` is already subscribed to streamer \`${producer}\`.`),
                 addSubSuccess: (newItemsCount = 0, failedInserts = null) =>
                     message.channel.send(`Successfully added streamer \`${producer}\` to server \`${message.guild.name}'s\` subscriptions, with ${newItemsCount} allowlist items.`)
+            },
+            'remove': {
+                dbError: () =>
+                    message.channel.send(`An error occurred removing streamer \`${producer}\` from server \`${message.guild.name}\`'s subscriptions. Please try again later.`),
+                subDoesNotExist: () =>
+                    message.channel.send(`Server \`${message.guild.name}\` is not subscribed to streamer \`${producer}\`.`),
+                removeSubSuccess: () =>
+                    message.channel.send(`Successfully removed streamer \`${producer}\` from server \`${message.guild.name}'s\` subscriptions.`)
             }
         },
         '@': {
@@ -42,10 +50,22 @@ module.exports = (message, cmdType, cmdName, producer) => {
             'add': {
                 dbError: () =>
                     message.channel.send(`An error occurred adding streamer \`${producer}\` to your subscriptions. Please try again later.`),
+                consumerIsProducer: () =>
+                    message.channel.send(`You cannot subscribe to your own feed.`),
                 subAlreadyExists: () =>
                     message.channel.send(`You are already subscribed to streamer \`${producer}\`.`),
                 addSubSuccess: (newItemsCount = 0, failedInsertions = null) =>
                     message.channel.send(`Successfully added streamer \`${producer}\` to your subscriptions, with ${newItemsCount} allowlist items.`)
+            },
+            'remove': {
+                dbError: () =>
+                    message.channel.send(`An error occurred removing streamer \`${producer}\` from your subscriptions. Please try again later.`),
+                consumerIsProducer: () =>
+                    message.channel.send(`You cannot subscribe to (or unsubscribe from) your own feed.`),
+                subDoesNotExist: () =>
+                    message.channel.send(`You are not subscribed to streamer \`${producer}\`.`),
+                removeSubSuccess: () =>
+                    message.channel.send(`Successfully removed streamer \`${producer}\` from your subscriptions.`)
             }
         }
     };
@@ -53,7 +73,7 @@ module.exports = (message, cmdType, cmdName, producer) => {
     const common = {
         noProducerSpecified: () => message.channel.send(`No streamer was specified.`),
         noAllowlistItemsSpecified: () => message.channel.send(`No allowlist items were specified.`),
-        producerDoesNotExist: () => message.channel.send(`\`${producer}\` is not registered with ${global.PRODUCT_NAME}.`),
+        producerDoesNotExist: () => message.channel.send(`Streamer \`${producer}\` is not registered with ${global.PRODUCT_NAME}.`),
         consumerDoesNotExist: () => message.channel.send(`Your Discord account is not connected to ${global.PRODUCT_NAME}. Please use !connect.`)
     };
 

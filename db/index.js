@@ -63,6 +63,28 @@ const addSub = (consumerId, producerId, discordMentionServerId, domain, type, en
     );
 }
 
+const removeSub = (consumerId, producerId, discordMentionServerId, domain, type, client = null) => {
+    if (discordMentionServerId === null && type === null) {
+        return (client || pool).query(
+            `DELETE FROM subscription
+            WHERE consumer_id = $1 AND producer_id = $2 AND subscription_domain = $3`,
+            [consumerId, producerId, domain]
+        );
+    } else if (discordMentionServerId === null) {
+        return (client || pool).query(
+            `DELETE FROM subscription
+            WHERE consumer_id = $1 AND producer_id = $2 AND subscription_domain = $3 AND discord_subscription_type = $4`,
+            [consumerId, producerId, domain, type]
+        );
+    } else {
+        return (client || pool).query(
+            `DELETE FROM subscription
+            WHERE consumer_id = $1 AND producer_id = $2 AND discord_mention_server_id = $3 AND subscription_domain = $4 AND discord_subscription_type = $5`,
+            [consumerId, producerId, discordMentionServerId, domain, type]
+        );
+    }
+};
+
 const addToAllowlist = (subId, items, client = null) => {
     return (client || pool).query(
         `UPDATE subscription
@@ -89,6 +111,7 @@ module.exports = {
     getSub,
     getFeedCategories,
     addSub,
+    removeSub,
     addToAllowlist,
     removeFromAllowlist
 };

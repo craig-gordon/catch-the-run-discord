@@ -38,9 +38,10 @@ exports.run = async (client, message, args, level) => {
 
   if (consumerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerDoesNotExist);
   if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
+  if (consumerRecord.id === producerRecord.id) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerIsProducer);
 
   try {
-    await db.addSub(producerRecord.id, consumerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, {}, dbClient);
+    await db.addSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, {}, dbClient);
   } catch (err) {
     if (err.code === db.UNIQUE_VIOLATION_CODE) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.subAlreadyExists);
     else return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.addSubError(err), messager.dbError);
