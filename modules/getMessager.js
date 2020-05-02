@@ -11,7 +11,8 @@ module.exports = (message, cmdType, cmdName, producer) => {
             'add': {
                 dbError: () => send(`An error occurred adding streamer \`${producer}\` to server \`${message.guild.name}\`'s subscriptions. Please try again later.`),
                 subAlreadyExists: () => send(`Server \`${message.guild.name}\` is already subscribed to streamer \`${producer}\`.`),
-                addSubSuccess: (newItemsCount = 0, failedInserts = null) => send(`Successfully added streamer \`${producer}\` to server \`${message.guild.name}'s\` subscriptions, with ${newItemsCount} allowlist items.`)
+                addSubSuccess: (newItemsCount = 0, failedInserts = null) =>
+                    send(`Successfully added streamer \`${producer}\` to server \`${message.guild.name}'s\` subscriptions, including \`${newItemsCount}\` allowlist items.${failedInserts && Object.keys(failedInserts).length > 0 ? ` The following items were invalid: ${Object.keys(failedInserts).map(item => `\`${item}\``).join(', ')}` : ''}`)
             },
             'remove': {
                 dbError: () => send(`An error occurred removing streamer \`${producer}\` from server \`${message.guild.name}\`'s subscriptions. Please try again later.`),

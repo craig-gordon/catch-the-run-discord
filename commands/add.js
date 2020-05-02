@@ -9,7 +9,7 @@ exports.run = async (client, message, args, level) => {
   const consumerDiscordId = ctx.getConsumerDiscordId();
   const messager = getMessager(message, ctx.cmdType, ctx.cmdName, producer);
   const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
-  const itemsSpecified = allowlistItems.length > 0;
+  const wereItemsSpecified = allowlistItems.length > 0;
 
   if (producer === undefined) return messager.noProducerSpecified();
 
@@ -21,13 +21,15 @@ exports.run = async (client, message, args, level) => {
   }
 
   let feedCategoriesRes;
-  if (itemsSpecified) feedCategoriesRes = db.getFeedCategories(producer, dbClient);
+  if (wereItemsSpecified) feedCategoriesRes = db.getFeedCategories(producer, dbClient);
   const consumerRes = db.getConsumer(consumerDiscordId, dbClient);
   const producerRes = db.getProducer(producer, dbClient);
 
   let consumerRecord;
   let producerRecord;
   let feedCategoryRecords;
+  let validItems = {};
+  let invalidItems;
 
   try {
     consumerRecord = (await consumerRes).rows[0];
@@ -43,25 +45,63 @@ exports.run = async (client, message, args, level) => {
   
   if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
   
-  if (itemsSpecified) {
+  if (wereItemsSpecified) {
     try {
       feedCategoryRecords = (await feedCategoriesRes).rows;
     } catch (err) {
       return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getFeedCategoriesError(err), messager.dbError);
     }
 
-
+    const { valid, invalid } = handleAllowlistItemsToAdd(allowlistItems, feedCategoryRecords);
+    validItems = valid;
+    invalidItems = invalid;
   }
 
   try {
-    await db.addSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, {}, dbClient);
+    await db.addSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, validItems, dbClient);
   } catch (err) {
     if (err.code === db.UNIQUE_VIOLATION_CODE) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.subAlreadyExists);
     else return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.addSubError(err), messager.dbError);
   }
 
-  return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.addSubSuccess);
+  return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.addSubSuccess(Object.keys(validItems).length, invalidItems));
 };
+
+const handleAllowlistItemsToAdd = (itemsToAdd, feedCategories) => {
+  let valid = {};
+  const invalid = {};
+
+  for (let i = 0; i < itemsToAdd.length; i++) {
+    const item = itemsToAdd[i].replace(/[_]/g, ' ');
+    if (item === '$all') {
+      valid = {'$all': true};
+      break;
+    } else if (item.includes('|')) {
+      const [game, category] = item.split('|');
+      let isValid = false;
+      for (let j = 0; j < feedCategories.length; j++) {
+        const fc = feedCategories[j];
+        if ((fc.game_title === game || fc.game_abbreviation === game) && fc.category_name === category) {
+          valid[`${fc.game_title}|${fc.category_name}`] = true;
+          isValid = true;
+          break;
+        }
+      }
+      if (!isValid) invalid[`${game}|${category}`] = true;
+    } else {
+      const game = item;
+      for (let j = 0; j < feedCategories.length; j++) {
+        const fc = feedCategories[j];
+        if (fc.game_title === game || fc.game_abbreviation === game) {
+          valid[fc.game_title] = true;
+        }
+      }
+      invalid[game] = true;
+    }
+  }
+
+  return { valid, invalid };
+}
 
 // validate all items
 // add each valid item to an object

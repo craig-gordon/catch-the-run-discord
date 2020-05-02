@@ -45,7 +45,7 @@ const getSub = (consumerDiscordId, producerTwitchName, domain, type, client = nu
 
 const getFeedCategories = (producerTwitchName, client = null) => {
     return (client || pool).query(
-        `SELECT cat.name AS category_name, game.title AS game_title
+        `SELECT cat.name AS category_name, game.title AS game_title, game.abbreviation AS game_abbreviation
         FROM category AS cat
         INNER JOIN feed_category AS fc ON cat.id = fc.category_id 
         INNER JOIN app_user AS producer ON fc.producer_id = producer.id 
