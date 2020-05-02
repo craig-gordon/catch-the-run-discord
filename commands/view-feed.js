@@ -54,7 +54,7 @@ exports.help = {
   name: 'view-feed',
   category: 'Feed Information',
   description: `Displays the specified streamer's feed, including stream URL, games, and categories.`,
-  usage: '!view-feed [streamer_twitch_username]'
+  usage: '!view-feed [streamer twitch username]'
 };
 
 const formatFeedItems = categoryRecords => {

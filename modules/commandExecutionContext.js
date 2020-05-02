@@ -25,11 +25,11 @@ class CommandExecutionContext {
         return this.cmdType === 'server' ? this.serverId : this.callerId;
     }
 
-    endCommandExecution(dbClient, logExecutionContext, loggerErrorCallback, messagerCallback) {
+    endCommandExecution(dbClient, logExecutionContext, logError, sendMessage) {
         dbClient && dbClient.end();
         logExecutionContext && logExecutionContext(this);
-        loggerErrorCallback && loggerErrorCallback();
-        return messagerCallback && messagerCallback();
+        logError && logError();
+        return sendMessage && sendMessage();
     }
 };
 

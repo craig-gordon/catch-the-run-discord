@@ -1,27 +1,33 @@
-exports.run = (client, message, args, level) => {
-  const providedName = args[0];
+const getMessager = require('../modules/getMessager.js');
+const getLogger = require('../modules/getLogger.js');
+const CommandExecutionContext = require('../modules/commandExecutionContext.js');
 
-  if (providedName === undefined) {
-    return message.reply(`No channel name was provided. Example format: "!set-channel notifications"`);
-  }
+exports.run = (client, message, args, level) => {
+  const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
+  let [identifier] = args;
+  const messager = getMessager(message, ctx.cmdType, ctx.cmdName);
+  const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName);
+  
+  if (identifier === undefined) return ctx.endCommandExecution(null, logger.logContext, null, messager.noChannelSpecified);
+
+  const type = identifier.slice(0, 2) === '<#' ? 'ref' : 'plaintext';
+  if (type === 'ref') identifier = identifier.slice(2, -1);
 
   const existingChannel = message.guild.channels.find(channel => channel.id === client.settings.get(message.guild.id, 'channel'));
-  if (providedName === existingChannel.name) {
-    return message.reply(`On-pace notifications are already being posted in channel ${existingChannel}`)
-  }
+  const checkValue = type === 'ref' ? existingChannel.id : existingChannel.name;
+  if (identifier === checkValue) return ctx.endCommandExecution(null, logger.logContext, null, () => messager.existingChannelSpecified(existingChannel));
 
-  for (const channel of message.guild.channels) {
-    const channelId = channel[0];
-    const currName = channel[1].name;
-    if (currName === providedName) {
-      client.settings.set(message.guild.id, channelId, 'channel');
-      return message.reply(
-        `On-pace notifications will now be posted in channel ${channel[1]}`
-      );
+  for (const channelObj of message.guild.channels) {
+    const [id, channel] = channelObj;
+    const name = channel.name;
+    const checkValue = type === 'ref' ? id : name; 
+    if (checkValue === identifier) {
+      client.settings.set(message.guild.id, id, 'channel');
+      return ctx.endCommandExecution(null, logger.logContext, null, () => messager.setChannelSuccess(channel));
     }
   }
 
-  return message.reply(`The name provided did not match any of the channels in this server. Example format: "!set-channel notifications"`);
+  return ctx.endCommandExecution(null, logger.logContext, null, () => messager.channelDoesNotExist(identifier));
 };
 
 exports.conf = {
@@ -33,7 +39,7 @@ exports.conf = {
 
 exports.help = {
   name: 'set-channel',
-  category: 'Configuration',
-  description: 'Sets the channel that the CtR bot will post on-pace notifications',
+  category: 'Bot Configuration',
+  description: 'Sets the channel in the current server that the Catch The Run bot will post notifications in. Accepts the channel name in either plaintext or the #channel-name format.',
   usage: 'set-channel [channel name]'
 };

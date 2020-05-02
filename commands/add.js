@@ -80,5 +80,5 @@ exports.help = {
   category: 'Subscription Management',
   description: `[Server] Adds a streamer to a server's notifications feed. The streamer must have a feed registered with ${global.PRODUCT_NAME}.\n
   [DM] Adds a streamer to your Discord DM subscriptions. The streamer must have a feed registered with ${global.PRODUCT_NAME}.`,
-  usage: '!add [streamer_twitch_username] smb1 Super_Mario_World sm64|120_Star Super_Mario_Sunshine|96_Shines'
+  usage: '!add [streamer twitch username] smb1 Super_Mario_World sm64|120_Star Super_Mario_Sunshine|96_Shines'
 };

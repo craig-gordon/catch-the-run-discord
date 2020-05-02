@@ -64,5 +64,5 @@ exports.help = {
   category: 'Subscription Management',
   description: `[Server] Removes a streamer from a server's notifications feed.\n
   [DM] Removes a streamer from your Discord DM subscriptions.`,
-  usage: '!remove streamer_twitch_username'
+  usage: '!remove [streamer twitch username]'
 };
