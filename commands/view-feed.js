@@ -1,65 +1,70 @@
-const DynamoDB = require('aws-sdk/clients/dynamodb');
+const db = require('../db/index.js');
+const getMessager = require('../modules/getMessager.js');
+const getLogger = require('../modules/getLogger.js');
+const CommandExecutionContext = require('../modules/commandExecutionContext.js');
 
 exports.run = async (client, message, args, level) => {
-  const dynamoClient = new DynamoDB.DocumentClient({
-    endpoint: 'https://dynamodb.us-east-1.amazonaws.com',
-    accessKeyId: 'AKIAYGOXM6CJTCGJ5S5Z',
-    secretAccessKey: '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',
-    region: 'us-east-1'
-  });
+  const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
+  const [producer] = args;
+  const messager = getMessager(message, ctx.cmdType, ctx.cmdName, producer);
+  const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
-  const producer = args[0];
+  if (producer === undefined) return messager.noProducerSpecified();
 
-  if (producer === undefined) {
-    return message.reply(`No streamer was specified. Example format: "!add bAsEdUrNgOd333221"`);
+  let dbClient;
+  try {
+    dbClient = await db.getDbClient();
+  } catch (err) {
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), message.dbError);
   }
 
-  const getFeedQueryParams = {
-    TableName: 'Main',
-    KeyConditionExpression: 'PRT = :PRT AND begins_with(SRT, :SRT)',
-    ExpressionAttributeValues: {
-      ':PRT': producer,
-      ':SRT': 'F|CAT'
-    }
-  };
+  const feedCategoriesRes = db.getFeedCategories(producer, dbClient);
+  const producerRes = db.getProducer(producer, dbClient);
+
+  let feedCategoryRecords;
+  let producerRecord;
 
   try {
-    const dbRes = await dynamoClient.query(getFeedQueryParams).promise();
-
-    if (dbRes.Items.length > 0) {
-      return message.channel.send(
-        formatFeedItems(dbRes.Items),
-        { code: 'asciidoc' }
-      );
-    } else {
-      return message.reply(`The specified streamer does not have a notifications feed. This command takes case-sensitive input. Example format: "!remove bAsEdUrNgOd333221"`);
-    }
-  } catch (e) {
-    return message.reply(`There was an error getting ${producer}'s feed. Please try again later.`);
+    producerRecord = (await producerRes).rows[0];
+  } catch (err) {
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), messager.dbError);
   }
+  
+  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
+  
+  try {
+    feedCategoryRecords = (await feedCategoriesRes).rows;
+  } catch (err) {
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getFeedCategoriesError(err), messager.dbError);
+  }
+
+  const formattedItems = formatFeedItems(feedCategoryRecords);
+  const output = `twitch.tv/${producer}\n\n${formattedItems}`;
+  return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.displayFeed(output));
 };
 
 exports.conf = {
   enabled: true,
-  guildOnly: true,
-  aliases: [],
+  guildOnly: false,
+  aliases: ['view', 'view-streamer'],
   permLevel: 'User'
 };
 
 exports.help = {
   name: 'view-feed',
   category: 'Feed Information',
-  description: `Displays the games & categories in the specified streamer's feed.`,
-  usage: 'view-feed [streamer twitch username]'
+  description: `Displays the specified streamer's feed, including stream URL, games, and categories.`,
+  usage: '!view-feed [streamer_twitch_username]'
 };
 
-const formatFeedItems = dbCategoryItems => {
+const formatFeedItems = categoryRecords => {
+  if (categoryRecords.length === 0) return `No games or categories currently registered.`
+
   const games = [];
 
-  const rawCategories = dbCategoryItems.map(item => item.SRT.split('|')[2]);
-
-  rawCategories.forEach(category => {
-    const [gameTitle, categoryName] = category.split('_');
+  categoryRecords.forEach(category => {
+    const gameTitle = category.game_title;
+    const categoryName = category.category_name;
 
     const idx = games.reduce((idx, currGame, currIdx) => {
       if (currGame.title === gameTitle) idx = currIdx;
@@ -79,7 +84,7 @@ const formatFeedItems = dbCategoryItems => {
   let output = '';
 
   games.forEach(game => {
-    output += `- ${game.title}\n`;
+    output += `► ${game.title}\n`;
     game.categories.forEach(cat => output += `\t- ${cat}\n`);
     output += '\n';
   });

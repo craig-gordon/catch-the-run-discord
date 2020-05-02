@@ -17,6 +17,10 @@ module.exports = (message, cmdType, cmdName, producer) => {
                 dbError: () => s(`An error occurred removing streamer \`${producer}\` from server \`${message.guild.name}\`'s subscriptions. Please try again later.`),
                 subDoesNotExist: () => s(`Server \`${message.guild.name}\` is not subscribed to streamer \`${producer}\`.`),
                 removeSubSuccess: () => s(`Successfully removed streamer \`${producer}\` from server \`${message.guild.name}'s\` subscriptions.`)
+            },
+            'view-feed': {
+                dbError: () => s(`An error occurred displaying the games and categories in streamer \`${producer}\`'s feed. Please try again later.`),
+                displayFeed: (feed) => s(feed, { code: 'asciidoc' })
             }
         },
         '@': {
@@ -45,12 +49,15 @@ module.exports = (message, cmdType, cmdName, producer) => {
                 consumerIsProducer: () => s(`You cannot subscribe to (or unsubscribe from) your own feed.`),
                 subDoesNotExist: () => s(`You are not subscribed to streamer \`${producer}\`.`),
                 removeSubSuccess: () => s(`Successfully removed streamer \`${producer}\` from your subscriptions.`)
+            },
+            'view-feed': {
+                dbError: () => s(`An error occurred displaying the games and categories in streamer \`${producer}\`'s feed. Please try again later.`),
+                displayFeed: (feed) => s(feed, { code: 'asciidoc' })
             }
         }
     };
 
     const common = {
-        helpDescription: (helpDescription) => s(helpDescription),
         noProducerSpecified: () => s(`No streamer was specified.`),
         noAllowlistItemsSpecified: () => s(`No allowlist items were specified.`),
         producerDoesNotExist: () => s(`Streamer \`${producer}\` is not registered with ${global.PRODUCT_NAME}.`),

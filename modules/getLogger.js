@@ -5,7 +5,6 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
         'server': {
             'add-to-allowlist': {
                 getSubError: (err) => e(`Error getting (${message.guild.id} | ${message.guild.name})'s subscription to producer ${producer}: ${err}`),
-                getFeedCategoriesError: (err) => e(`Error getting producer ${producer}'s feed categories: ${err}`),
                 addToAllowlistError: (err) => e(`Error adding to (${message.guild.id} | ${message.guild.name})'s allowlist for producer ${producer}: ${err}`)
             },
             'add': {
@@ -15,6 +14,9 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
             'remove': {
                 getConsumerError: (err) => e(`Error getting consumer record for (${message.guild.id} | ${message.guild.name}): ${err}`),
                 removeSubError: (err) => e(`Error removing producer ${producer} from (${message.guild.id} | ${message.guild.name})'s subscriptions: ${err}`)
+            },
+            'view-feed': {
+
             }
         },
         '@': {
@@ -27,7 +29,6 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
         'dm': {
             'add-to-allowlist': {
                 getSubError: (err) => e(`Error getting (${message.author.id} | ${message.author.username})'s subscription to producer ${producer}: ${err}`),
-                getFeedCategoriesError: (err) => e(`Error getting producer ${producer}'s feed categories: ${err}`),
                 addToAllowlistError: (err) => e(`Error adding to (${message.author.id} | ${message.author.username})'s whitelist for producer ${producer}: ${err}`)
             },
             'add': {
@@ -37,6 +38,9 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
             'remove': {
                 getConsumerError: (err) => e(`Error getting consumer record for (${message.author.id} | ${message.author.username}): ${err}`),
                 removeSubError: (err) => e(`Error removing producer ${producer} from (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
+            },
+            'view-feed': {
+                
             }
         }
     };
@@ -51,7 +55,8 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
             logger.info('%o', ctx);
         },
         getDbClientError: (err) => e(`Error getting client from pg pool: ${err}`),
-        getProducerError: (err) => e(`Error getting producer record for ${producer}: ${err}`)
+        getProducerError: (err) => e(`Error getting producer record for ${producer}: ${err}`),
+        getFeedCategoriesError: (err) => e(`Error getting producer ${producer}'s feed categories: ${err}`)
     };
 
     return Object.assign(logRepository[cmdType][cmdName], common);

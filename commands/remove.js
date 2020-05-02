@@ -5,13 +5,12 @@ const CommandExecutionContext = require('../modules/commandExecutionContext.js')
 
 exports.run = async (client, message, args, level) => {
   const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
-  const [producer] = ctx.args;
+  const [producer] = args;
   const consumerDiscordId = ctx.getConsumerDiscordId();
   const messager = getMessager(message, ctx.cmdType, ctx.cmdName, producer);
   const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
   if (producer === undefined) return messager.noProducerSpecified();
-  if (producer === 'help') return ctx.endCommandExecution(null, logger.logContext, null, () => messager.helpDescription(this.help.description));
 
   let dbClient;
   try {

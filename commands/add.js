@@ -5,13 +5,13 @@ const CommandExecutionContext = require('../modules/commandExecutionContext.js')
 
 exports.run = async (client, message, args, level) => {
   const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
-  const [producer, ...allowlistItems] = ctx.args;
+  const [producer, ...allowlistItems] = args;
   const consumerDiscordId = ctx.getConsumerDiscordId();
   const messager = getMessager(message, ctx.cmdType, ctx.cmdName, producer);
   const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
+  const itemsSpecified = allowlistItems.length > 0;
 
   if (producer === undefined) return messager.noProducerSpecified();
-  if (producer === 'help') return ctx.endCommandExecution(null, logger.logContext, null, () => messager.helpDescription(this.help.description));
 
   let dbClient;
   try {
@@ -20,10 +20,14 @@ exports.run = async (client, message, args, level) => {
     return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), message.dbError);
   }
 
+  let feedCategoriesRes;
+  if (itemsSpecified) feedCategoriesRes = db.getFeedCategories(producer, dbClient);
   const consumerRes = db.getConsumer(consumerDiscordId, dbClient);
   const producerRes = db.getProducer(producer, dbClient);
+
   let consumerRecord;
   let producerRecord;
+  let feedCategoryRecords;
 
   try {
     consumerRecord = (await consumerRes).rows[0];
@@ -36,10 +40,18 @@ exports.run = async (client, message, args, level) => {
   } catch (err) {
     return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), messager.dbError);
   }
-
-  if (consumerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerDoesNotExist);
+  
   if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
-  if (consumerRecord.id === producerRecord.id) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerIsProducer);
+  
+  if (itemsSpecified) {
+    try {
+      feedCategoryRecords = (await feedCategoriesRes).rows;
+    } catch (err) {
+      return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getFeedCategoriesError(err), messager.dbError);
+    }
+
+
+  }
 
   try {
     await db.addSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, {}, dbClient);
@@ -68,5 +80,5 @@ exports.help = {
   category: 'Subscription Management',
   description: `[Server] Adds a streamer to a server's notifications feed. The streamer must have a feed registered with ${global.PRODUCT_NAME}.\n
   [DM] Adds a streamer to your Discord DM subscriptions. The streamer must have a feed registered with ${global.PRODUCT_NAME}.`,
-  usage: '!add streamer_twitch_username [smb1] [Super_Mario_World] [sm64|120_Star] [Super_Mario_Sunshine|Any%]'
+  usage: '!add [streamer_twitch_username] smb1 Super_Mario_World sm64|120_Star Super_Mario_Sunshine|96_Shines'
 };

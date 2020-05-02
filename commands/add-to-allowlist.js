@@ -1,13 +1,13 @@
 const db = require('../db/index.js');
-const getCommandMessager = require('../modules/getCommandMessager.js');
-const getCommandLogger = require('../modules/getCommandLogger.js');
+const getMessager = require('../modules/getMessager.js');
+const getLogger = require('../modules/getLogger.js');
 
 exports.run = async (client, message, args, level) => {
   const [producer, ...allowlistItemsToAdd] = args;
   const cmdName = this.help.name;
   const cmdType = client.getCommandType(message);
-  const messager = getCommandMessager(message, cmdType, cmdName, producer);
-  const logger = getCommandLogger(client.logger, message, cmdType, cmdName, producer);
+  const messager = getMessager(message, cmdType, cmdName, producer);
+  const logger = getLogger(client.logger, message, cmdType, cmdName, producer);
 
   if (producer === undefined) return messager.noProducerSpecified();
   if (allowlistItemsToAdd.length === 0) return messager.noAllowlistItemsSpecified();
