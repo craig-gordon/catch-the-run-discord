@@ -13,16 +13,18 @@ exports.run = (client, message, args, level) => {
   const type = identifier.slice(0, 2) === '<#' ? 'ref' : 'plaintext';
   if (type === 'ref') identifier = identifier.slice(2, -1);
 
-  const existingChannel = message.guild.channels.find(channel => channel.id === client.settings.get(message.guild.id, 'channel'));
-  const checkValue = type === 'ref' ? existingChannel.id : existingChannel.name;
-  if (identifier === checkValue) return ctx.endCommandExecution(null, logger.logContext, null, () => messager.existingChannelSpecified(existingChannel));
+  const existingChannel = message.guild.channels.find(channel => channel.id === client.settings.get(message.guild.id, 'notificationsChannelId'));
+  if (existingChannel) {
+    const checkValue = type === 'ref' ? existingChannel.id : existingChannel.name;
+    if (checkValue === identifier) return ctx.endCommandExecution(null, logger.logContext, null, () => messager.existingChannelSpecified(existingChannel));
+  }
 
   for (const channelObj of message.guild.channels) {
     const [id, channel] = channelObj;
     const name = channel.name;
     const checkValue = type === 'ref' ? id : name; 
     if (checkValue === identifier) {
-      client.settings.set(message.guild.id, id, 'channel');
+      client.settings.set(message.guild.id, id, 'notificationsChannelId');
       return ctx.endCommandExecution(null, logger.logContext, null, () => messager.setChannelSuccess(channel));
     }
   }

@@ -42,6 +42,7 @@ exports.run = async (client, message, [action, key, ...value], level) => {
   // Resets a key to the default value
   else if (action === 'del' || action === 'reset') {
     if (!key) return message.reply('Please specify a key to reset.');
+    if (settings[key]) client.settings.delete(message.guild.id, key);
     if (!defaults[key])
       return message.reply('This key does not exist in the settings');
     if (!overrides[key])

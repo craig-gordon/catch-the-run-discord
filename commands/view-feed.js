@@ -15,7 +15,7 @@ exports.run = async (client, message, args, level) => {
   try {
     dbClient = await db.getDbClient();
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), message.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), () => messager.dbError(producer));
   }
 
   const feedCategoriesRes = db.getFeedCategories(producer, dbClient);
@@ -27,15 +27,15 @@ exports.run = async (client, message, args, level) => {
   try {
     producerRecord = (await producerRes).rows[0];
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), messager.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), () => messager.dbError(producer));
   }
   
-  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
+  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.producerDoesNotExist(producer));
   
   try {
     feedCategoryRecords = (await feedCategoriesRes).rows;
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getFeedCategoriesError(err), messager.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getFeedCategoriesError(err), () => messager.dbError(producer));
   }
 
   const formattedItems = formatFeedItems(feedCategoryRecords);

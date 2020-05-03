@@ -1,4 +1,4 @@
-const db = require('../db/index.js');
+const db = require('../modules/db.js');
 const getMessager = require('../modules/getMessager.js');
 const getLogger = require('../modules/getLogger.js');
 const CommandExecutionContext = require('../modules/commandExecutionContext.js');
@@ -17,7 +17,7 @@ exports.run = async (client, message, args, level) => {
   try {
     dbClient = await db.getDbClient();
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), message.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), () => message.dbError(producer));
   }
 
   let feedCategoriesRes;
@@ -34,22 +34,22 @@ exports.run = async (client, message, args, level) => {
   try {
     consumerRecord = (await consumerRes).rows[0];
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getConsumerError(err), messager.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getConsumerError(err), () => messager.dbError(producer));
   }
 
   try {
     producerRecord = (await producerRes).rows[0];
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), messager.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), () => messager.dbError(producer));
   }
   
-  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
+  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist(producer));
   
   if (wereItemsSpecified) {
     try {
       feedCategoryRecords = (await feedCategoriesRes).rows;
     } catch (err) {
-      return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getFeedCategoriesError(err), messager.dbError);
+      return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getFeedCategoriesError(err), () => messager.dbError(producer));
     }
 
     const { valid, invalid } = handleAllowlistItemsToAdd(allowlistItems, feedCategoryRecords);
@@ -58,13 +58,13 @@ exports.run = async (client, message, args, level) => {
   }
 
   try {
-    await db.addSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, validItems, dbClient);
+    await db.addSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, consumerDiscordId, dbClient);
   } catch (err) {
-    if (err.code === db.UNIQUE_VIOLATION_CODE) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.subAlreadyExists);
-    else return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.addSubError(err), messager.dbError);
+    if (err.code === db.UNIQUE_VIOLATION_CODE) return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.subAlreadyExists(producer));
+    else return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.addSubError(err), () => messager.dbError(producer));
   }
 
-  return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.addSubSuccess(Object.keys(validItems).length, invalidItems));
+  return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.addSubSuccess(producer, Object.keys(validItems).length, invalidItems));
 };
 
 const handleAllowlistItemsToAdd = (itemsToAdd, feedCategories) => {

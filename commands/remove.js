@@ -1,4 +1,4 @@
-const db = require('../db/index.js');
+const db = require('../modules/db.js');
 const getMessager = require('../modules/getMessager.js');
 const getLogger = require('../modules/getLogger.js');
 const CommandExecutionContext = require('../modules/commandExecutionContext.js');
@@ -16,40 +16,40 @@ exports.run = async (client, message, args, level) => {
   try {
     dbClient = await db.getDbClient();
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), message.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getDbClientError(err), () => message.dbError(producer));
   }
 
   const consumerRes = db.getConsumer(consumerDiscordId, dbClient);
-  const producerRes = db.getProducer(producer, dbClient);
+  const producerRes = db.getConsumerSubs(consumerDiscordId, dbClient);
   let consumerRecord;
   let producerRecord;
 
   try {
     consumerRecord = (await consumerRes).rows[0];
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getConsumerError(err), messager.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getConsumerError(err), () => messager.dbError(producer));
   }
 
   try {
     producerRecord = (await producerRes).rows[0];
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), messager.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.getProducerError(err), () => messager.dbError(producer));
   }
 
   if (consumerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerDoesNotExist);
-  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.producerDoesNotExist);
+  if (producerRecord === undefined) return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.producerDoesNotExist(producer));
   if (consumerRecord.id === producerRecord.id) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.consumerIsProducer);
 
   let removeRes;
   try {
     removeRes = await db.removeSub(consumerRecord.id, producerRecord.id, null, 'discord', ctx.cmdType, dbClient);
   } catch (err) {
-    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.removeSubError(err), messager.dbError);
+    return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.removeSubError(err), () => messager.dbError(producer));
   }
 
-  if (removeRes.rowCount === 0) return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.subDoesNotExist);
+  if (removeRes.rowCount === 0) return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.subDoesNotExist(producer));
 
-  return ctx.endCommandExecution(dbClient, logger.logContext, null, messager.removeSubSuccess);
+  return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.removeSubSuccess(producer));
 };
 
 exports.conf = {

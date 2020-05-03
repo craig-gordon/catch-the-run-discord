@@ -11,16 +11,13 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
                 getConsumerError: (err) => e(`Error getting consumer record for (${message.guild.id} | ${message.guild.name}): ${err}`),
                 addSubError: (err) => e(`Error adding producer ${producer} to (${message.guild.id} | ${message.guild.name})'s subscriptions: ${err}`)
             },
+            'channel': {},
             'remove': {
                 getConsumerError: (err) => e(`Error getting consumer record for (${message.guild.id} | ${message.guild.name}): ${err}`),
                 removeSubError: (err) => e(`Error removing producer ${producer} from (${message.guild.id} | ${message.guild.name})'s subscriptions: ${err}`)
             },
-            'set-channel': {
-
-            },
-            'view-feed': {
-
-            }
+            'set-channel': {},
+            'view-feed': {}
         },
         '@': {
             'add': {
@@ -38,16 +35,13 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
                 getConsumerError: (err) => e(`Error getting consumer record for (${message.author.id} | ${message.author.username}): ${err}`),
                 addSubError: (err) => e(`Error adding producer ${producer} to (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
             },
+            'channel': {},
             'remove': {
                 getConsumerError: (err) => e(`Error getting consumer record for (${message.author.id} | ${message.author.username}): ${err}`),
                 removeSubError: (err) => e(`Error removing producer ${producer} from (${message.author.id} | ${message.author.username})'s subscriptions: ${err}`)
             },
-            'set-channel': {
-
-            },
-            'view-feed': {
-
-            }
+            'set-channel': {},
+            'view-feed': {}
         }
     };
 
