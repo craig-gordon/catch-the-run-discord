@@ -1,4 +1,4 @@
-const db = require('../db/index.js');
+const db = require('../modules/db.js');
 const getMessager = require('../modules/getMessager.js');
 const getLogger = require('../modules/getLogger.js');
 const CommandExecutionContext = require('../modules/commandExecutionContext.js');

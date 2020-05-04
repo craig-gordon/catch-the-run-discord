@@ -1,8 +1,9 @@
+const db = require('../modules/db.js');
 const getMessager = require('../modules/getMessager.js');
 const getLogger = require('../modules/getLogger.js');
 const CommandExecutionContext = require('../modules/commandExecutionContext.js');
 
-exports.run = (client, message, args, level) => {
+exports.run = async (client, message, args, level) => {
   const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
   let [identifier] = args;
   const messager = getMessager(message, ctx.cmdType, ctx.cmdName);
@@ -19,11 +20,16 @@ exports.run = (client, message, args, level) => {
     if (checkValue === identifier) return ctx.endCommandExecution(null, logger.logContext, null, () => messager.existingChannelSpecified(existingChannel));
   }
 
-  for (const channelObj of message.guild.channels) {
-    const [id, channel] = channelObj;
+  for (const channelTuple of message.guild.channels) {
+    const [id, channel] = channelTuple;
     const name = channel.name;
     const checkValue = type === 'ref' ? id : name; 
     if (checkValue === identifier) {
+      try {
+        await db.updateAllServerSubEndpoints(id, message.guild.id);
+      } catch (err) {
+        return ctx.endCommandExecution(null, logger.logContext, () => logger.updateServerSubEndpointsError(err, channel), () => messager.dbError(message.guild.name))
+      }
       client.settings.set(message.guild.id, id, 'notificationsChannelId');
       return ctx.endCommandExecution(null, logger.logContext, null, () => messager.setChannelSuccess(channel));
     }

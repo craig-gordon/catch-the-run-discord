@@ -93,23 +93,46 @@ module.exports = {
         );
     },
 
+    updateAllServerSubEndpoints: (channelId, serverId, client = null) => {
+        return (client || pool).query(
+            `UPDATE subscription
+            SET endpoint = $1
+            FROM (
+                SELECT sub.id AS sub_id, consumer.discord_id AS server_id
+                FROM subscription AS sub
+                INNER JOIN app_user AS producer ON sub.producer_id = producer.id
+                INNER JOIN app_user AS consumer ON sub.consumer_id = consumer.id
+            ) AS extended_sub
+            WHERE SUBSCRIPTION.id = extended_sub.sub_id
+            AND extended_sub.server_id = $2`,
+            [channelId, serverId]
+        );
+    },
+
     removeSub: (consumerId, producerId, discordMentionServerId, domain, type, client = null) => {
         if (discordMentionServerId === null && type === null) {
             return (client || pool).query(
                 `DELETE FROM subscription
-                WHERE consumer_id = $1 AND producer_id = $2 AND subscription_domain = $3`,
+                WHERE consumer_id = $1 AND producer_id = $2
+                AND subscription_domain = $3`,
                 [consumerId, producerId, domain]
             );
         } else if (discordMentionServerId === null) {
             return (client || pool).query(
                 `DELETE FROM subscription
-                WHERE consumer_id = $1 AND producer_id = $2 AND subscription_domain = $3 AND discord_subscription_type = $4`,
+                WHERE consumer_id = $1 AND producer_id = $2
+                AND subscription_domain = $3
+                AND discord_subscription_type = $4`,
                 [consumerId, producerId, domain, type]
             );
         } else {
             return (client || pool).query(
                 `DELETE FROM subscription
-                WHERE consumer_id = $1 AND producer_id = $2 AND discord_mention_server_id = $3 AND subscription_domain = $4 AND discord_subscription_type = $5`,
+                WHERE consumer_id = $1
+                AND producer_id = $2
+                AND discord_mention_server_id = $3
+                AND subscription_domain = $4
+                AND discord_subscription_type = $5`,
                 [consumerId, producerId, discordMentionServerId, domain, type]
             );
         }

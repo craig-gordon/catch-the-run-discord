@@ -27,6 +27,7 @@ module.exports = (message, cmdType, cmdName) => {
                 removeSubSuccess: (producer) => send(`Successfully removed streamer \`${producer}\` from server \`${message.guild.name}'s\` subscriptions.`)
             },
             'set-channel': {
+                dbError: (server) => send(`An error occurred updating the channel that notifications are posted in for server \`${server}\`. Please try again later.`),
                 noChannelSpecified: () => send(`Please specify a channel name.`),
                 existingChannelSpecified: (channel) => send(`Notifications are already being posted in channel ${channel}.`),
                 setChannelSuccess: (channel) => send(`Notifications will now be posted in channel ${channel}.`),

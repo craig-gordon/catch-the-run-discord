@@ -82,7 +82,7 @@ exports.run = async (client, message, [action, key, ...value], level) => {
     // Otherwise, the default action is to return the whole configuration;
     const array = [];
     Object.entries(settings).forEach(([key, value]) => {
-      array.push(`${key}${' '.repeat(20 - key.length)}::  ${value}`);
+      array.push(`${key}${' '.repeat(30 - key.length)}::  ${value}`);
     });
     await message.channel.send(
       `= Current Guild Settings =\n${array.join('\n')}`,
