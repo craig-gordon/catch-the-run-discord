@@ -14,6 +14,12 @@ module.exports = {
 
     getDbClient: () => pool.connect(),
 
+    beginTransaction: (client) => client.query('BEGIN'),
+
+    commitTransaction: (client) => client.query('COMMIT'),
+
+    rollbackTransaction: (client) => client.query('ROLLBACK'),
+
     getProducer: (producerTwitchName, client = null) => {
         return (client || pool).query(
             `SELECT producer.id, producer.twitch_name
@@ -98,13 +104,29 @@ module.exports = {
             `UPDATE subscription
             SET endpoint = $1
             FROM (
-                SELECT sub.id AS sub_id, consumer.discord_id AS server_id
+                SELECT sub.id AS sub_id, consumer.discord_id AS server_discord_id
                 FROM subscription AS sub
                 INNER JOIN app_user AS producer ON sub.producer_id = producer.id
                 INNER JOIN app_user AS consumer ON sub.consumer_id = consumer.id
             ) AS extended_sub
-            WHERE SUBSCRIPTION.id = extended_sub.sub_id
-            AND extended_sub.server_id = $2`,
+            WHERE subscription.id = extended_sub.sub_id
+            AND extended_sub.server_discord_id = $2`,
+            [channelId, serverId]
+        );
+    },
+
+    updateAllMentionSubEndpoints: (channelId, serverId, client = null) => {
+        return (client || pool).query(
+            `UPDATE subscription
+            SET endpoint = $1
+            FROM (
+                SELECT sub.id AS sub_id, mention_server.discord_id AS server_discord_id
+                FROM subscription AS sub
+                INNER JOIN app_user AS producer ON sub.producer_id = producer.id
+                INNER JOIN app_user AS mention_server ON sub.discord_mention_server_id = mention_server.id
+            ) AS extended_sub
+            WHERE subscription.id = extended_sub.sub_id
+            AND extended_sub.server_discord_id = $2`,
             [channelId, serverId]
         );
     },

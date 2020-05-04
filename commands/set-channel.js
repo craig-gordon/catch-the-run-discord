@@ -23,15 +23,27 @@ exports.run = async (client, message, args, level) => {
   for (const channelTuple of message.guild.channels) {
     const [id, channel] = channelTuple;
     const name = channel.name;
-    const checkValue = type === 'ref' ? id : name; 
+    const checkValue = type === 'ref' ? id : name;
+
     if (checkValue === identifier) {
+      const dbClient = await db.getDbClient();
+
       try {
-        await db.updateAllServerSubEndpoints(id, message.guild.id);
+        await db.beginTransaction(dbClient);
+
+        const serverRes = db.updateAllServerSubEndpoints(id, message.guild.id, dbClient);
+        const mentionRes = db.updateAllMentionSubEndpoints(id, message.guild.id, dbClient);
+        await serverRes;
+        await mentionRes;
+
+        await db.commitTransaction(dbClient);
       } catch (err) {
-        return ctx.endCommandExecution(null, logger.logContext, () => logger.updateServerSubEndpointsError(err, channel), () => messager.dbError(message.guild.name))
+        await db.rollbackTransaction(dbClient);
+        return ctx.endCommandExecution(dbClient, logger.logContext, () => logger.updateServerSubEndpointsError(err, channel), () => messager.dbError(message.guild.name));
       }
+
       client.settings.set(message.guild.id, id, 'notificationsChannelId');
-      return ctx.endCommandExecution(null, logger.logContext, null, () => messager.setChannelSuccess(channel));
+      return ctx.endCommandExecution(dbClient, logger.logContext, null, () => messager.setChannelSuccess(channel));
     }
   }
 
