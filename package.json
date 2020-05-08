@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=dev nodemon --inspect index.js",
+    "start-staging": "cross-env NODE_ENV=staging node --inspect index.js", 
     "start-prod": "cross-env NODE_ENV=prod node index.js",
     "postinstall": "node setup.js",
     "lint": "eslint commands events modules index.js server.js setup.js",

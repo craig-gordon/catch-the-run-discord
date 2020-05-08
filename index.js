@@ -8,7 +8,6 @@ const readdir = promisify(require('fs').readdir);
 const client = new Discord.Client();
 
 require('./modules/clientMethods.js')(client);
-require('./server')(client);
 
 client.config = require('./config.js');
 client.logger = require('./modules/baseLogger');
