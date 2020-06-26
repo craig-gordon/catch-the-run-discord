@@ -1,12 +1,12 @@
 const db = require('../modules/db.js');
-const getMessager = require('../modules/getMessager.js');
+const getMessenger = require('../modules/getMessenger.js');
 const getLogger = require('../modules/getLogger.js');
 const CommandExecutionContext = require('../modules/commandExecutionContext.js');
 
 exports.run = async (client, message, args, level) => {
   const ctx = new CommandExecutionContext(Date.now(), args, message, this.help.name);
   const [producer] = args;
-  const messager = getMessager(message, ctx.cmdType, ctx.cmdName, producer);
+  const messager = getMessenger(message, ctx.cmdType, ctx.cmdName, producer);
   const logger = getLogger(client.logger, message, ctx.cmdType, ctx.cmdName, producer);
 
   if (producer === undefined) return messager.noProducerSpecified();

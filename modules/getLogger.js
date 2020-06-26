@@ -1,4 +1,4 @@
-module.exports = (logger, message, cmdType, cmdName, producer) => {
+module.exports = (logger, cmdRepo, message, producer) => {
     const error = (...args) => logger.error(...args);
 
     const logRepository = {
@@ -57,9 +57,9 @@ module.exports = (logger, message, cmdType, cmdName, producer) => {
             logger.info('%o', ctx);
         },
         getDbClientError: (err) => error(`Error getting client from pg pool: ${err}`),
-        getProducerError: (err) => error(`Error getting producer record for ${producer}: ${err}`),
-        getFeedCategoriesError: (err) => error(`Error getting producer ${producer}'s feed categories: ${err}`)
+        getProducerError: (err, producer) => error(`Error getting producer record for ${producer}: ${err}`),
+        getFeedCategoriesError: (err, producer) => error(`Error getting producer ${producer}'s feed categories: ${err}`)
     };
 
-    return Object.assign(logRepository[cmdType][cmdName], common);
+    return Object.assign(common, cmdRepo);
 };

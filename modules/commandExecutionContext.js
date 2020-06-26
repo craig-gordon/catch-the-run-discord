@@ -1,5 +1,7 @@
 class CommandExecutionContext {
     constructor(startTime, args, message, cmdName) {
+        this.cmdExecutionStartTime = startTime;
+        this.messageCreationTime = message.createdTimestamp;
         this.args = args;
         this.messageString = message.content;
         this.cmdName = cmdName;
@@ -7,8 +9,6 @@ class CommandExecutionContext {
         this.channelId = message.channel.id;
         this.callerId = message.author.id;
         this.callerUsername = message.author.username;
-        this.cmdExecutionStartTime = startTime;
-        this.messageCreationTime = message.createdTimestamp;
 
         if (this.cmdType !== 'dm') {
             this.channelName = message.channel.name;

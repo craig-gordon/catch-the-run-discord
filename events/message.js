@@ -76,5 +76,5 @@ module.exports = async (client, message) => {
     message.author.username
     } (${message.author.id}) ran command ${cmd.help.name}`
   );
-  cmd.run(client, message, args, level);
+  cmd.run(client, message, args, level, Date.now());
 };
