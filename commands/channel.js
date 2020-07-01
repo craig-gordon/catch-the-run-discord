@@ -4,7 +4,7 @@ const CommandExecutionContext = require('../modules/commandExecutionContext.js')
 
 exports.run = (client, message, args, level, startTime) => {
   const ctx = new CommandExecutionContext(startTime, args, message, this.help.name);
-  const messenger = getMessenger(message, getMessageRepo(message));
+  const messenger = getMessenger(message, getMessageRepo);
   const logger = getLogger(client.logger);
 
   const channel = message.guild.channels.find(channel => channel.id === message.settings.notificationsChannelId);

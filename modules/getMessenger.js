@@ -1,4 +1,4 @@
-module.exports = (message, cmdRepo) => {
+module.exports = (message, getCmdRepo) => {
     const send = (...args) => message.channel.send(...args);
 
     const messageRepository = {
@@ -88,5 +88,5 @@ module.exports = (message, cmdRepo) => {
         consumerDoesNotExist: () => send(`Your Discord account is not connected to ${global.PRODUCT_NAME}. Please use the !connect command.`)
     };
 
-    return Object.assign(common, cmdRepo);
+    return Object.assign(common, getCmdRepo && getCmdRepo(message));
 };

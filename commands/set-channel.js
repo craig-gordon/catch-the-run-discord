@@ -5,8 +5,8 @@ const CommandExecutionContext = require('../modules/commandExecutionContext.js')
 
 exports.run = async (client, message, args, level, startTime) => {
   const ctx = new CommandExecutionContext(startTime, args, message, this.help.name);
-  const messenger = getMessenger(message, getMessageRepo(message));
-  const logger = getLogger(client.logger, getLogRepo(client.logger));
+  const messenger = getMessenger(message, getMessageRepo);
+  const logger = getLogger(client.logger, getLogRepo);
   let [identifier] = args;
   
   if (identifier === undefined) return ctx.endCommandExecution(null, logger.logContext, null, messenger.noChannelSpecified);
@@ -75,9 +75,9 @@ exports.help = {
 const getMessageRepo = (message) => ({
   dbError: () => message.channel.send(`An error occurred updating the channel that notifications are posted in for server \`${message.guild.name}\`. Please try again later.`),
   noChannelSpecified: () => message.channel.send(`Please specify a channel name.`),
-  existingChannelSpecified: () => message.channel.send(`Notifications are already being posted in channel ${message.channel}.`),
-  setChannelSuccess: () => message.channel.send(`Notifications will now be posted in channel ${message.channel}.`),
-  channelDoesNotExist: () => message.channel.send(`Channel name \`${message.channel}\` did not match any of the channels in the current server.`)
+  existingChannelSpecified: (channel) => message.channel.send(`Notifications are already being posted in channel ${channel}.`),
+  setChannelSuccess: (channel) => message.channel.send(`Notifications will now be posted in channel ${channel}.`),
+  channelDoesNotExist: (channel) => message.channel.send(`Channel name \`${channel}\` did not match any of the channels in the current server.`)
 });
 
 const getLogRepo = (logger) => ({

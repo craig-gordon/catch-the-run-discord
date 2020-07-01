@@ -1,4 +1,4 @@
-module.exports = (logger, cmdRepo, message, producer) => {
+module.exports = (logger, getCmdRepo, message, producer) => {
     const error = (...args) => logger.error(...args);
 
     const logRepository = {
@@ -61,5 +61,5 @@ module.exports = (logger, cmdRepo, message, producer) => {
         getFeedCategoriesError: (err, producer) => error(`Error getting producer ${producer}'s feed categories: ${err}`)
     };
 
-    return Object.assign(common, cmdRepo);
+    return Object.assign(common, getCmdRepo && getCmdRepo(logger));
 };
